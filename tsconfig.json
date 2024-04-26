@@ -1,0 +1,29 @@
+{
+	"compilerOptions": {
+		"target": "es5",
+		"module": "CommonJS",
+		"outDir": "./dist",
+		"paths": {
+			"@/*": ["./src/*"],
+			"@@/*": ["./*"]
+		},
+		"lib": ["esnext", "dom", "dom.iterable", "scripthost"],
+		"composite": false,
+		"declaration": true,
+		"declarationMap": true,
+		"downlevelIteration": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"inlineSources": false,
+		"isolatedModules": true,
+		"moduleResolution": "node",
+		"noUnusedLocals": false,
+		"noUnusedParameters": false,
+		"preserveWatchOutput": true,
+		"skipLibCheck": true,
+		"sourceMap": true,
+		"strictNullChecks": true
+	},
+	"include": ["src/**/*.ts", "src/**/*.d.ts"],
+	"exclude": ["node_modules"]
+}
