@@ -10,14 +10,16 @@ enum UpdateType {
 	full = 'full',
 }
 
-type RoomUpdate = {
-	type: UpdateType.full;
-	value: Record<string, unknown>;
-} | {
-	type: UpdateType.unit;
-	unitId: string;
-	value: unknown;
-};
+type RoomUpdate =
+	| {
+			type: UpdateType.full;
+			value: Record<string, unknown>;
+	  }
+	| {
+			type: UpdateType.unit;
+			unitId: string;
+			value: unknown;
+	  };
 
 const isRoomUpdate = (value: unknown): value is RoomUpdate => {
 	return typeof value === 'object' && value !== null && 'type' in value;
@@ -39,11 +41,14 @@ class Room {
 	}
 
 	sendUnit(unitId: string, ws?: WebSocket) {
-		this.sendUpdate({
-			type: UpdateType.unit,
-			unitId,
-			value: this.state[unitId],
-		}, ws);
+		this.sendUpdate(
+			{
+				type: UpdateType.unit,
+				unitId,
+				value: this.state[unitId],
+			},
+			ws
+		);
 	}
 
 	setUnit(unitId: string, value: unknown) {
@@ -63,7 +68,7 @@ class Room {
 		this.state = value;
 		this.sendState();
 	}
-};
+}
 const rooms = new Map<string, Room>();
 
 const getRoom = (code: string) => {
@@ -97,17 +102,20 @@ const addSocketToRoom = (code: string, ws: WebSocket) => {
 const removeSocketFromRoom = (code: string, ws: WebSocket) => {
 	const room = getRoom(code);
 	room.sockets.delete(ws);
-	setTimeout(() => {
-		if (room.sockets.size === 0) {
-			rooms.delete(code);
-		}
-	}, 60 * 60 * 1000);
+	setTimeout(
+		() => {
+			if (room.sockets.size === 0) {
+				rooms.delete(code);
+			}
+		},
+		60 * 60 * 1000
+	);
 };
 
 wss.on('connection', (ws, req) => {
 	const url = new URL(req.url!, 'http://127.0.0.1');
 	const code = url.searchParams.get('code');
-	console.log('new connection', url.toString(), code);
+	console.log('new connection', code);
 	if (!code) {
 		ws.close();
 		return;
@@ -133,4 +141,4 @@ serve({
 		});
 	},
 	port: 81,
-})
+});
