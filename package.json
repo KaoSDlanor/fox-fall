@@ -1,0 +1,8 @@
+{
+  "name": "fox-fall-server",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "repository": "https://github.com/KaoSDlanor/fox-fall",
+  "author": "KaoSDlanor <KaoSDlanor@gmail.com>",
+  "license": "MIT"
+}
