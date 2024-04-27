@@ -37,11 +37,19 @@ __metadata:
     "@hono/node-server": "npm:^1.11.1"
     "@types/node": "npm:^20.12.7"
     "@types/ws": "npm:^8.5.10"
+    hono: "npm:^4.2.8"
     prettier: "npm:^3.0.3"
     typescript: "npm:^5.2.2"
     ws: "npm:^8.16.0"
   languageName: unknown
   linkType: soft
+
+"hono@npm:^4.2.8":
+  version: 4.2.8
+  resolution: "hono@npm:4.2.8"
+  checksum: 10c0/3efe06f9b0261c698ccb60cde3f0f082c9f15eeca8019189c9345a920da58359628726fa23d33a313a18292246fa3c1ca8b8080f3490a1521107ae1827b4f7d6
+  languageName: node
+  linkType: hard
 
 "prettier@npm:^3.0.3":
   version: 3.2.5

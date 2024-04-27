@@ -1,9 +1,24 @@
 import { serve } from '@hono/node-server';
-import { createServer } from 'node:http';
+import { serveStatic } from '@hono/node-server/serve-static';
+import { Hono } from 'hono';
 import WebSocket from 'ws';
 
-const server = createServer({});
-const wss = new WebSocket.Server({ server });
+const app = new Hono();
+app.use(
+	'/*',
+	serveStatic({
+		root: './www',
+		index: 'index.html',
+		onNotFound: (path, c) => {
+			console.log(`${path} is not found, request to ${c.req.path}`);
+		},
+	})
+);
+const server = serve({
+	fetch: app.fetch,
+	port: 80,
+});
+const wss = new WebSocket.Server({ port: 81 });
 
 enum UpdateType {
 	unit = 'unit',
@@ -122,23 +137,4 @@ wss.on('connection', (ws, req) => {
 	}
 
 	addSocketToRoom(code, ws);
-});
-
-server.listen(80, () => {
-	console.log('WebSocket server started on port 80');
-});
-
-serve({
-	fetch: async (request) => {
-		const output = {
-			rooms: Array.from(rooms.keys()),
-		};
-
-		return new Response(JSON.stringify(output), {
-			headers: {
-				'Content-Type': 'application/json',
-			},
-		});
-	},
-	port: 81,
 });
