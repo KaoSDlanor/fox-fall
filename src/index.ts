@@ -23,16 +23,22 @@ const wss = new WebSocket.Server({ port: 81 });
 enum UpdateType {
 	unit = 'unit',
 	full = 'full',
+	wind = 'wind',
 }
 
 type RoomUpdate =
 	| {
 			type: UpdateType.full;
-			value: Record<string, unknown>;
+			units: Record<string, unknown>;
+			wind?: unknown;
 	  }
 	| {
 			type: UpdateType.unit;
 			unitId: string;
+			value: unknown;
+	  }
+	| {
+			type: UpdateType.wind;
 			value: unknown;
 	  };
 
@@ -42,7 +48,8 @@ const isRoomUpdate = (value: unknown): value is RoomUpdate => {
 
 class Room {
 	sockets = new Set<WebSocket>();
-	state: Record<string, unknown> = {};
+	units: Record<string, unknown> = {};
+	wind?: unknown;
 
 	sendUpdate(roomUpdate: RoomUpdate, ws?: WebSocket) {
 		const message = JSON.stringify(roomUpdate);
@@ -60,28 +67,44 @@ class Room {
 			{
 				type: UpdateType.unit,
 				unitId,
-				value: this.state[unitId],
+				value: this.units[unitId],
 			},
 			ws
 		);
 	}
 
 	setUnit(unitId: string, value: unknown) {
-		this.state[unitId] = value;
+		this.units[unitId] = value;
 		this.sendUnit(unitId);
 	}
 
 	sendState(ws?: WebSocket) {
 		const roomUpdate: RoomUpdate = {
 			type: UpdateType.full,
-			value: this.state,
+			units: this.units,
+			wind: this.wind,
 		};
 		this.sendUpdate(roomUpdate, ws);
 	}
 
-	setState(value: Record<string, unknown>) {
-		this.state = value;
+	setUnits(value: Record<string, unknown>) {
+		this.units = value;
 		this.sendState();
+	}
+
+	sendWind(ws?: WebSocket) {
+		this.sendUpdate(
+			{
+				type: UpdateType.wind,
+				value: this.wind,
+			},
+			ws
+		);
+	}
+
+	setWind(value: unknown) {
+		this.wind = value;
+		this.sendWind();
 	}
 }
 const rooms = new Map<string, Room>();
@@ -101,9 +124,12 @@ const addSocketToRoom = (code: string, ws: WebSocket) => {
 		const data = JSON.parse(message.toString());
 		if (!isRoomUpdate(data)) return;
 		if (data.type === UpdateType.full) {
-			room.setState(data.value);
+			if (data.wind) room.setWind(data.wind);
+			room.setUnits(data.units);
 		} else if (data.type === UpdateType.unit) {
 			room.setUnit(data.unitId, data.value);
+		} else if (data.type === UpdateType.wind) {
+			room.setWind(data.value);
 		}
 	});
 
