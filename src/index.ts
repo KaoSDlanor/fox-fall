@@ -7,14 +7,14 @@ const app = new Hono();
 app.use(
 	'/*',
 	serveStatic({
-		root: './www',
+		root: './www/',
 		index: 'index.html',
 		onNotFound: (path, c) => {
 			console.log(`${path} is not found, request to ${c.req.path}`);
 		},
 	})
 );
-const server = serve({
+serve({
 	fetch: app.fetch,
 	port: 80,
 });
