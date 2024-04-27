@@ -107,11 +107,15 @@ const addSocketToRoom = (code: string, ws: WebSocket) => {
 		}
 	});
 
+	room.sendState(ws);
+	const intervalId = setInterval(() => {
+		room.sendState(ws);
+	}, 30_000);
+
 	ws.once('close', () => {
+		clearInterval(intervalId);
 		removeSocketFromRoom(code, ws);
 	});
-
-	room.sendState(ws);
 };
 
 const removeSocketFromRoom = (code: string, ws: WebSocket) => {
