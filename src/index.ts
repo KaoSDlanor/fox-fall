@@ -21,16 +21,22 @@ serve({
 const wss = new WebSocket.Server({ port: 81 });
 
 enum UpdateType {
-	unit = 'unit',
 	full = 'full',
+	readyToFire = 'readyToFire',
+	unit = 'unit',
 	wind = 'wind',
 }
 
 type RoomUpdate =
 	| {
 			type: UpdateType.full;
+			readyToFire?: boolean;
 			units: Record<string, unknown>;
 			wind?: unknown;
+	  }
+	| {
+			type: UpdateType.readyToFire;
+			value: boolean;
 	  }
 	| {
 			type: UpdateType.unit;
@@ -48,6 +54,7 @@ const isRoomUpdate = (value: unknown): value is RoomUpdate => {
 
 class Room {
 	sockets = new Set<WebSocket>();
+	readyToFire = false;
 	units: Record<string, unknown> = {};
 	wind?: unknown;
 
@@ -81,15 +88,33 @@ class Room {
 	sendState(ws?: WebSocket) {
 		const roomUpdate: RoomUpdate = {
 			type: UpdateType.full,
+			readyToFire: this.readyToFire,
 			units: this.units,
 			wind: this.wind,
 		};
 		this.sendUpdate(roomUpdate, ws);
 	}
 
-	setUnits(value: Record<string, unknown>) {
-		this.units = value;
+	setState(readyToFire?: boolean, units?: Record<string, unknown>, wind?: unknown) {
+		if (readyToFire !== undefined) this.readyToFire = readyToFire;
+		if (units !== undefined) this.units = units;
+		if (wind !== undefined) this.wind = wind;
 		this.sendState();
+	}
+
+	sendReadyToFire(ws?: WebSocket) {
+		this.sendUpdate(
+			{
+				type: UpdateType.readyToFire,
+				value: this.readyToFire,
+			},
+			ws
+		);
+	}
+
+	setReadyToFire(value: boolean) {
+		this.readyToFire = value;
+		this.sendReadyToFire();
 	}
 
 	sendWind(ws?: WebSocket) {
@@ -124,8 +149,9 @@ const addSocketToRoom = (code: string, ws: WebSocket) => {
 		const data = JSON.parse(message.toString());
 		if (!isRoomUpdate(data)) return;
 		if (data.type === UpdateType.full) {
-			if (data.wind) room.setWind(data.wind);
-			room.setUnits(data.units);
+			room.setState(data.readyToFire, data.units, data.wind);
+		} else if (data.type === UpdateType.readyToFire) {
+			room.setReadyToFire(data.value);
 		} else if (data.type === UpdateType.unit) {
 			room.setUnit(data.unitId, data.value);
 		} else if (data.type === UpdateType.wind) {
