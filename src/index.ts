@@ -30,21 +30,25 @@ enum UpdateType {
 type RoomUpdate =
 	| {
 			type: UpdateType.full;
+			eventFrom?: string;
 			readyToFire?: boolean;
 			units: Record<string, unknown>;
 			wind?: unknown;
 	  }
 	| {
 			type: UpdateType.readyToFire;
+			eventFrom?: string;
 			value: boolean;
 	  }
 	| {
 			type: UpdateType.unit;
+			eventFrom?: string;
 			unitId: string;
 			value: unknown;
 	  }
 	| {
 			type: UpdateType.wind;
+			eventFrom?: string;
 			value: unknown;
 	  };
 
@@ -58,7 +62,7 @@ class Room {
 	units: Record<string, unknown> = {};
 	wind?: unknown;
 
-	sendUpdate(roomUpdate: RoomUpdate, ws?: WebSocket) {
+	sendUpdate(roomUpdate: RoomUpdate, eventFrom?: string, ws?: WebSocket) {
 		const message = JSON.stringify(roomUpdate);
 		if (ws) {
 			ws.send(message);
@@ -69,67 +73,74 @@ class Room {
 		}
 	}
 
-	sendUnit(unitId: string, ws?: WebSocket) {
+	sendUnit(unitId: string, eventFrom?: string, ws?: WebSocket) {
 		this.sendUpdate(
 			{
 				type: UpdateType.unit,
+				eventFrom,
 				unitId,
 				value: this.units[unitId],
 			},
+			eventFrom,
 			ws
 		);
 	}
 
-	setUnit(unitId: string, value: unknown) {
+	setUnit(unitId: string, value: unknown, eventFrom?: string) {
 		this.units[unitId] = value;
-		this.sendUnit(unitId);
+		this.sendUnit(unitId, eventFrom);
 	}
 
-	sendState(ws?: WebSocket) {
+	sendState(eventFrom?: string, ws?: WebSocket) {
 		const roomUpdate: RoomUpdate = {
 			type: UpdateType.full,
+			eventFrom,
 			readyToFire: this.readyToFire,
 			units: this.units,
 			wind: this.wind,
 		};
-		this.sendUpdate(roomUpdate, ws);
+		this.sendUpdate(roomUpdate, eventFrom, ws);
 	}
 
-	setState(readyToFire?: boolean, units?: Record<string, unknown>, wind?: unknown) {
+	setState(readyToFire?: boolean, units?: Record<string, unknown>, wind?: unknown, eventFrom?: string) {
 		if (readyToFire !== undefined) this.readyToFire = readyToFire;
 		if (units !== undefined) this.units = units;
 		if (wind !== undefined) this.wind = wind;
-		this.sendState();
+		this.sendState(eventFrom);
 	}
 
-	sendReadyToFire(ws?: WebSocket) {
+	sendReadyToFire(eventFrom?: string, ws?: WebSocket) {
 		this.sendUpdate(
 			{
 				type: UpdateType.readyToFire,
+				eventFrom,
 				value: this.readyToFire,
 			},
+			eventFrom,
 			ws
 		);
 	}
 
-	setReadyToFire(value: boolean) {
+	setReadyToFire(value: boolean, eventFrom?: string) {
 		this.readyToFire = value;
-		this.sendReadyToFire();
+		this.sendReadyToFire(eventFrom);
 	}
 
-	sendWind(ws?: WebSocket) {
+	sendWind(eventFrom?: string, ws?: WebSocket) {
 		this.sendUpdate(
 			{
 				type: UpdateType.wind,
+				eventFrom,
 				value: this.wind,
 			},
+			eventFrom,
 			ws
 		);
 	}
 
-	setWind(value: unknown) {
+	setWind(value: unknown, eventFrom?: string) {
 		this.wind = value;
-		this.sendWind();
+		this.sendWind(eventFrom);
 	}
 }
 const rooms = new Map<string, Room>();
@@ -149,19 +160,19 @@ const addSocketToRoom = (code: string, ws: WebSocket) => {
 		const data = JSON.parse(message.toString());
 		if (!isRoomUpdate(data)) return;
 		if (data.type === UpdateType.full) {
-			room.setState(data.readyToFire, data.units, data.wind);
+			room.setState(data.readyToFire, data.units, data.wind, data.eventFrom);
 		} else if (data.type === UpdateType.readyToFire) {
-			room.setReadyToFire(data.value);
+			room.setReadyToFire(data.value, data.eventFrom);
 		} else if (data.type === UpdateType.unit) {
-			room.setUnit(data.unitId, data.value);
+			room.setUnit(data.unitId, data.value, data.eventFrom);
 		} else if (data.type === UpdateType.wind) {
-			room.setWind(data.value);
+			room.setWind(data.value, data.eventFrom);
 		}
 	});
 
-	room.sendState(ws);
+	room.sendState(undefined, ws);
 	const intervalId = setInterval(() => {
-		room.sendState(ws);
+		room.sendState(undefined, ws);
 	}, 30_000);
 
 	ws.once('close', () => {
