@@ -45,8 +45,9 @@
 </style>
 
 <script setup lang="ts">
+	import { getFiringSolution } from '@/lib/firing-calculations';
 	import { artillery } from '@/lib/globals';
-	import { getUnitResolvedVector, UnitType } from '@/lib/unit';
+	import { UnitType } from '@/lib/unit';
 	import { computed } from 'vue';
 
 	const artilleryUnits = computed(() => {
@@ -64,15 +65,11 @@
 	const firingVector = computed(() => {
 		if (artilleryUnits.value[0] == null || targetUnits.value[0] == null)
 			return undefined;
-		const resolvedArtillery = getUnitResolvedVector(
+		return getFiringSolution(
 			artillery.unitMap.value,
-			artilleryUnits.value[0].id
-		);
-		const resolvedTarget = getUnitResolvedVector(
-			artillery.unitMap.value,
-			targetUnits.value[0].id
-		);
-		const firingVector = resolvedArtillery.getRelativeOffset(resolvedTarget);
-		return firingVector.addVector(artillery.wind.value.scale(-1));
+			artilleryUnits.value[0].id,
+			targetUnits.value[0].id,
+			artillery.wind.value
+		).firingVectorWithWind;
 	});
 </script>

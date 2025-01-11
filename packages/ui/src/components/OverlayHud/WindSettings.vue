@@ -14,8 +14,18 @@
 				<DirectionInput v-model="artillery.wind.value.azimuth" @update:model-value="syncedRoom.updateWind()" autofocus />
 			</div>
 			<div class="Wind__information__item">
-				<label>Wind distance:</label>
-				<DistanceInput v-model="artillery.wind.value.distance" @update:model-value="syncedRoom.updateWind()" />
+				<label>Wind tier:</label>
+				<PrimeInputNumber
+					ref="primeInputNumber"
+					v-model="artillery.wind.value.distance"
+					@input="artillery.wind.value.distance = Number($event.value); syncedRoom.updateWind()"
+					locale="en-UK"
+					:allowEmpty="false"
+					highlightOnFocus
+					:minFractionDigits="0"
+					:maxFractionDigits="1"
+					:min="0"
+				/>
 			</div>
 			<PrimeButton
 				class="Wind__information__button"
@@ -53,8 +63,8 @@
 <script setup lang="ts">
 	import PrimeButton from 'primevue/button';
 	import PrimeDialog from 'primevue/dialog';
+	import PrimeInputNumber from 'primevue/inputnumber';
 	import DirectionInput from '@/components/inputs/DirectionInput/DirectionInput.vue';
-	import DistanceInput from '@/components/inputs/DistanceInput.vue';
 	import { artillery, syncedRoom } from '@/lib/globals';
 
 	const visible = defineModel('visible', { type: Boolean, required: true });

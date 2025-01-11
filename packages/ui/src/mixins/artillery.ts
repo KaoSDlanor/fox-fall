@@ -1,6 +1,7 @@
 import { type Ref, ref, watchEffect } from 'vue';
 import { useScopePerKey } from '@kaosdlanor/vue-reactivity';
 import { useEventListener } from '@vueuse/core';
+import { getFiringSolution, getWindEffect } from '@/lib/firing-calculations';
 import { settings } from '@/lib/settings';
 import {
 	type Unit,
@@ -24,8 +25,8 @@ export const useArtillery = (options: ArtilleryOptions = {}) => {
 	const wind = ref(Vector.fromAngularVector({ azimuth: 0, distance: 0 }));
 	const unitMap = ref<UnitMap>({});
 	const unitSelector = ref<{
-		selectUnit: (unitId?: string | null) => unknown,
-		prompt?: string,
+		selectUnit: (unitId?: string | null) => unknown;
+		prompt?: string;
 	} | null>(null);
 	const selectedUnit = ref<Unit['id'] | null>(null);
 	const pinnedUnits = ref<Set<Unit['id']>>(new Set());
@@ -148,9 +149,9 @@ export const useArtillery = (options: ArtilleryOptions = {}) => {
 		}
 	};
 
-	const editWind = async (unitId: string) => {
+	const editWind = async (landingZoneId: string) => {
 		try {
-			const unit = unitMap.value[unitId];
+			const unit = unitMap.value[landingZoneId];
 			if (unit == null) return;
 			if (unit.type !== UnitType.LandingZone) {
 				throw new Error('Only landing zones can update wind');
@@ -159,11 +160,11 @@ export const useArtillery = (options: ArtilleryOptions = {}) => {
 			const targets = Object.keys(unitMap.value).filter(
 				(unitId) => unitMap.value[unitId].type === UnitType.Target
 			);
-			let target: string;
+			let targetId: string;
 			if (targets.length === 1) {
-				target = targets[0];
+				targetId = targets[0];
 			} else {
-				target = await new Promise<string>((resolve, reject) => {
+				targetId = await new Promise<string>((resolve, reject) => {
 					unitSelector.value = {
 						selectUnit: (unitId) => {
 							unitSelector.value = null;
@@ -180,14 +181,36 @@ export const useArtillery = (options: ArtilleryOptions = {}) => {
 				});
 			}
 
-			const windCorrection = getUnitResolvedVector(
-				unitMap.value,
-				target
-			).addVector(getUnitResolvedVector(unitMap.value, unit.id).scale(-1));
-			wind.value = wind.value.addVector(windCorrection);
+			const guns = Object.keys(unitMap.value).filter(
+				(unitId) => unitMap.value[unitId].type === UnitType.Artillery
+			);
+			let gunId: string;
+			if (guns.length === 1) {
+				gunId = guns[0];
+			} else {
+				gunId = await new Promise<string>((resolve, reject) => {
+					unitSelector.value = {
+						selectUnit: (unitId) => {
+							unitSelector.value = null;
+							if (unitId == null) {
+								reject(new Error('User declined to select a unit'));
+							} else if (unitMap.value[unitId].type !== UnitType.Artillery) {
+								reject(new Error('Selected unit is not an artillery'));
+							} else {
+								resolve(unitId);
+							}
+						},
+						prompt: 'Select artillery',
+					};
+				});
+			}
+
+			const landingZonePosition = getUnitResolvedVector(unitMap.value, landingZoneId);
+			const { resolvedVectorFrom: gunPosition, firingVectorWithWind } = getFiringSolution(unitMap.value, gunId, targetId, wind.value);
+			wind.value = getWindEffect(gunPosition, landingZonePosition, firingVectorWithWind);
 			options.onWindUpdated?.();
 
-			removeUnit(unitId);
+			removeUnit(landingZoneId);
 		} catch (e) {
 			alert(`Failed to update wind: ${e}`);
 		}
@@ -199,8 +222,7 @@ export const useArtillery = (options: ArtilleryOptions = {}) => {
 	};
 
 	const resetViewport = () => {
-		if (!settings.value.lockRotate)
-			viewport.value.resetRotation();
+		if (!settings.value.lockRotate) viewport.value.resetRotation();
 
 		const unitVectors = Object.values(unitMap.value).map((unit) => {
 			return getUnitResolvedVector(unitMap.value, unit.id);
@@ -249,7 +271,8 @@ export const useArtillery = (options: ArtilleryOptions = {}) => {
 			const unitIdList = Object.keys(unitMap.value);
 
 			if (selectedUnit.value == null) {
-				selectedUnit.value = unitIdList[event.shiftKey ? unitIdList.length - 1 : 0];
+				selectedUnit.value =
+					unitIdList[event.shiftKey ? unitIdList.length - 1 : 0];
 				return;
 			}
 
@@ -257,11 +280,13 @@ export const useArtillery = (options: ArtilleryOptions = {}) => {
 			if (selectedUnitIndex === -1) return;
 
 			if (event.shiftKey) {
-				selectedUnit.value = unitIdList[
-					(selectedUnitIndex - 1 + unitIdList.length) % unitIdList.length
-				];
+				selectedUnit.value =
+					unitIdList[
+						(selectedUnitIndex - 1 + unitIdList.length) % unitIdList.length
+					];
 			} else {
-				selectedUnit.value = unitIdList[(selectedUnitIndex + 1) % unitIdList.length];
+				selectedUnit.value =
+					unitIdList[(selectedUnitIndex + 1) % unitIdList.length];
 			}
 		}
 	});

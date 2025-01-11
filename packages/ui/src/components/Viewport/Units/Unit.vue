@@ -33,7 +33,7 @@
 	</PositionedElement>
 
 	<PositionedElement
-		v-if="unit.type === UnitType.Target && artillery.wind.value.distance > 0"
+		v-if="unit.type === UnitType.Target && artillery.wind.value.distance > 0 && false"
 		:x="firingPosition.x"
 		:y="firingPosition.y"
 		:layer="LAYER.UNITS"

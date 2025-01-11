@@ -1,8 +1,8 @@
 <template>
 	<PositionedElement
 		:layer="LAYER.FIRING_ARC_LINES"
-		:x="resolvedVectorTo.x"
-		:y="resolvedVectorTo.y"
+		:x="firingSolution.resolvedVectorTo.x"
+		:y="firingSolution.resolvedVectorTo.y"
 	>
 		<svg
 			class="FiringArc__svg"
@@ -31,11 +31,11 @@
 			</div>
 			<div class="FiringArc__label-row">
 				<span>distance:</span>
-				<span>{{ Math.round(firingVectorWithWind.distance) }}m</span>
+				<span>{{ Math.round(firingSolution.firingVectorWithWind.distance) }}m</span>
 			</div>
 			<div class="FiringArc__label-row">
 				<span>azimuth:</span
-				><span>{{ firingVectorWithWind.azimuth.toFixed(1) }}°</span>
+				><span>{{ firingSolution.firingVectorWithWind.azimuth.toFixed(1) }}°</span>
 			</div>
 		</div>
 	</PositionedElement>
@@ -114,8 +114,9 @@
 <script setup lang="ts">
 	import PositionedElement from '@/components/Viewport/PositionedElement.vue';
 	import { LAYER } from '@/lib/constants/ui';
+	import { getFiringSolution } from '@/lib/firing-calculations';
 	import { artillery } from '@/lib/globals';
-	import { getUnitLabel, getUnitResolvedVector } from '@/lib/unit';
+	import { getUnitLabel } from '@/lib/unit';
 	import { Vector } from '@/lib/vector';
 	import { computed } from 'vue';
 
@@ -124,21 +125,19 @@
 		unitIdTo: string;
 	}>();
 
-	const resolvedVectorFrom = computed(() =>
-		getUnitResolvedVector(artillery.unitMap.value, props.unitIdFrom)
-	);
-	const resolvedVectorTo = computed(() =>
-		getUnitResolvedVector(artillery.unitMap.value, props.unitIdTo)
-	);
-	const firingVector = computed(() =>
-		resolvedVectorFrom.value.getRelativeOffset(resolvedVectorTo.value)
-	);
-	const firingVectorWithWind = computed(() =>
-		firingVector.value.addVector(artillery.wind.value.scale(-1))
+	const firingSolution = computed(() =>
+		getFiringSolution(
+			artillery.unitMap.value,
+			props.unitIdFrom,
+			props.unitIdTo,
+			artillery.wind.value
+		)
 	);
 
 	const lineVector = computed(() =>
-		firingVector.value.scale(-artillery.viewport.value.resolvedZoom)
+		firingSolution.value.firingVector.scale(
+			-artillery.viewport.value.resolvedZoom
+		)
 	);
 	const elevationOffset = computed(() =>
 		Vector.fromAngularVector({
@@ -147,8 +146,8 @@
 		})
 	);
 	const labelPosition = computed(() =>
-		resolvedVectorFrom.value
-			.addVector(resolvedVectorTo.value)
+		firingSolution.value.resolvedVectorFrom
+			.addVector(firingSolution.value.resolvedVectorTo)
 			.scale(0.5)
 			.addVector(
 				elevationOffset.value.scale(
