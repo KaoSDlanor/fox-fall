@@ -120,7 +120,6 @@
 <script setup lang="ts">
 	import Disk from '@/components/svg/Disk.vue';
 	import PositionedElement from '@/components/Viewport/PositionedElement.vue';
-	import { WIND_OFFSET_PER_RANGE } from '@/lib/constants';
 	import {
 		ARTILLERY_BY_SHELL,
 		ArtilleryPlatform,
@@ -128,6 +127,7 @@
 		SpottingSpecs,
 	} from '@/lib/constants/data';
 	import { LAYER } from '@/lib/constants/ui';
+	import { getWindOffset } from '@/lib/firing-calculations';
 	import { artillery } from '@/lib/globals';
 	import { getUnitResolvedVector, UnitType, type Unit } from '@/lib/unit';
 	import type { Vector } from '@/lib/vector';
@@ -156,7 +156,7 @@
 				unit.platform != null ? ammoDetails.PLATFORM[unit.platform] : undefined;
 			if (specs == null) continue;
 
-			const windOffset = specs.MAX_RANGE * WIND_OFFSET_PER_RANGE;
+			const windOffset = getWindOffset(artillery.wind.value.distance, specs.MAX_RANGE);
 
 			output.push({
 				unit,

@@ -1,7 +1,7 @@
 import { type Ref, ref, watchEffect } from 'vue';
 import { useScopePerKey } from '@kaosdlanor/vue-reactivity';
 import { useEventListener } from '@vueuse/core';
-import { getFiringSolution, getWindEffect } from '@/lib/firing-calculations';
+import { getFiringSolution, calculateWindValue } from '@/lib/firing-calculations';
 import { settings } from '@/lib/settings';
 import {
 	type Unit,
@@ -207,7 +207,7 @@ export const useArtillery = (options: ArtilleryOptions = {}) => {
 
 			const landingZonePosition = getUnitResolvedVector(unitMap.value, landingZoneId);
 			const { resolvedVectorFrom: gunPosition, firingVectorWithWind } = getFiringSolution(unitMap.value, gunId, targetId, wind.value);
-			wind.value = getWindEffect(gunPosition, landingZonePosition, firingVectorWithWind);
+			wind.value = calculateWindValue(gunPosition, landingZonePosition, firingVectorWithWind);
 			options.onWindUpdated?.();
 
 			removeUnit(landingZoneId);

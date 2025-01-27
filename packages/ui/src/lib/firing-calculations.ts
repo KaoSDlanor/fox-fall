@@ -1,6 +1,9 @@
+import { toRadians, wrapDegrees } from './angle';
 import { WIND_OFFSET_PER_RANGE } from './constants';
 import { getUnitResolvedVector, type UnitMap } from './unit';
 import type { Vector } from './vector';
+
+export const getWindOffset = (windTier: number, firingDistance: number) => firingDistance * (windTier + 1) * WIND_OFFSET_PER_RANGE;
 
 export const getFiringSolution = (
 	unitMap: UnitMap,
@@ -14,10 +17,10 @@ export const getFiringSolution = (
 
 	let firingVectorWithWind = vectorToTarget.clone();
 	if (wind.distance !== 0) {
-		const theta = wind.azimuth - vectorToTarget.azimuth;
-		const windConstant = wind.distance * WIND_OFFSET_PER_RANGE;
+		const theta = wrapDegrees(wind.azimuth - vectorToTarget.azimuth);
+		const windConstant = getWindOffset(wind.distance, 1);
 		const quadA = windConstant * windConstant - 1;
-		const quadB = -2 * vectorToTarget.distance * windConstant * Math.cos(theta);
+		const quadB = -2 * vectorToTarget.distance * windConstant * Math.cos(toRadians(theta));
 		const quadC = vectorToTarget.distance * vectorToTarget.distance;
 		const resolvedFiringDistance = (-quadB - Math.sqrt(quadB * quadB - 4 * quadA * quadC)) / (2 * quadA);
 
@@ -40,7 +43,7 @@ export const getFiringSolution = (
 	};
 };
 
-export const getWindEffect = (
+export const calculateWindValue = (
 	artilleryPosition: Vector,
 	landingZonePosition: Vector,
 	firingVectorWithWind: Vector
@@ -51,5 +54,5 @@ export const getWindEffect = (
 		landingZonePosition
 	);
 
-	return inaccuracy.scale(1 / (WIND_OFFSET_PER_RANGE * firingVectorWithWind.distance));
+	return inaccuracy.scale(1 / getWindOffset(1, firingVectorWithWind.distance));
 };
