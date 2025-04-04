@@ -16,6 +16,7 @@ export enum BackdropMode {
 export enum MapSource {
 	Vanilla = 'vanilla',
 	ImprovedMapModRustardKnightEdit = 'improved-map-mod-rustard-knight-edit',
+	ImprovedMapModRustardKnightEditHd = "improved-map-mod-rustard-knight-edit-hd"
 }
 
 export const settings = ref({
