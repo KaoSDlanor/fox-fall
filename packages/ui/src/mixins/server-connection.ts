@@ -11,12 +11,13 @@ export enum ServerConnectionState {
 
 export const getConnectionDetailsFromUrl = () => {
 	const url = new URL(window.location.href);
+	let useEncryption = url.searchParams.has('useEncryption');
 	let serverAddress = url.searchParams.get('serverAddress') || url.hostname;
 	let code = url.searchParams.get('code');
 
 	if (!serverAddress || !code) return null;
 
-	return { serverAddress, code };
+	return { serverAddress, code, useEncryption };
 };
 
 export const getConnectionDetails = () => {
@@ -29,6 +30,11 @@ export const getConnectionDetails = () => {
 
 	if (settings.value.sync) {
 		const newUrl = new URL(window.location.href);
+		if (settings.value.sync.useEncryption) {
+			newUrl.searchParams.set('useEncryption', '');
+		} else {
+			newUrl.searchParams.delete('useEncryption');
+		}
 		newUrl.searchParams.set('serverAddress', settings.value.sync.serverAddress);
 		newUrl.searchParams.set('code', settings.value.sync.code);
 		location.search = newUrl.search;
@@ -41,12 +47,20 @@ export const useServerConnection = () => {
 	const serverUrl = computed(() => {
 		const connectionDetails = getConnectionDetails();
 
-		const [address, port = '81'] = (
+		const [address, port] = (
 			connectionDetails?.serverAddress ?? ''
 		).split(':');
 
+		const useEncryption = (connectionDetails?.useEncryption ?? false);
+
+		let connPort = '';
+		if (port) connPort = `:${port}`;
+
+		let connType = 'ws';
+		if (useEncryption) connType = 'wss';
+
 		return address
-			? `ws://${address}:${port}/?code=${encodeURIComponent(connectionDetails?.code ?? '')}`
+			? `${connType}://${address}${connPort}/?code=${encodeURIComponent(connectionDetails?.code ?? '')}`
 			: null;
 	});
 
