@@ -9,6 +9,15 @@
 	>
 		<div class="Sync__settings">
 			<div class="Sync__settings__item">
+				<label>Use Encryption</label>
+				<input
+					type="checkbox"
+					id="encryption"
+					v-model="connectionDetails.useEncryption"
+					@keydown.enter="connect"
+				/>
+			</div>
+			<div class="Sync__settings__item">
 				<label>Server address:</label>
 				<TextInput
 					v-model="connectionDetails.serverAddress"
@@ -69,10 +78,15 @@
 
 	const visible = defineModel('visible', { type: Boolean, required: true });
 
-	const connectionDetails = ref(getConnectionDetails() ?? { code : '', serverAddress : '' });
+	const connectionDetails = ref(getConnectionDetails() ?? { code : '', serverAddress : '', useEncryption: false});
 
 	const connect = () => {
 		const newUrl = new URL(window.location.href);
+		if (connectionDetails.value.useEncryption) {
+			newUrl.searchParams.set('useEncryption', ''); // ?useEncryption
+		} else {
+			newUrl.searchParams.delete('useEncryption');
+		}
 		newUrl.searchParams.set('serverAddress', connectionDetails.value.serverAddress);
 		newUrl.searchParams.set('code', connectionDetails.value.code);
 		if (newUrl.search === location.search) {

@@ -50,6 +50,7 @@ export const settings = ref({
 	sync: null as {
 		serverAddress: string,
 		code: string,
+		useEncryption: boolean,
 	} | null,
 });
 
