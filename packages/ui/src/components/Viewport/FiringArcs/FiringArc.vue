@@ -31,7 +31,7 @@
 			:style="{ opacity: settings.firingArcOpacity }"
 		>
 			<div class="FiringArc__label-row">
-				<span class="FiringArc__span">
+				<span>
 					{{ getUnitLabel(artillery.unitMap.value, unitIdFrom) }} ->
 					{{ getUnitLabel(artillery.unitMap.value, unitIdTo) }}
 				</span>
@@ -114,8 +114,8 @@
 		transform: translate(-50%, -50%);
 		transform-origin: 50% 50%;
 
-		padding: 0.5em;
-		gap: 0.5em;
+		padding: 0.25em;
+		gap: 0.1em;
 
 		display: grid;
 		grid-template-columns: repeat(2, max-content);
@@ -123,6 +123,11 @@
 
 		background: var(--color-primary-contrast);
 		border: 1px solid;
+    border-radius: 0.3em;
+
+    font-size:  calc((16px + 2vmin) / 2);
+
+    line-height: 100%;
 
 		pointer-events: none;
 		user-select: none;
@@ -130,14 +135,14 @@
 		.FiringArc__label-row {
 			grid-column: 1 / -1;
 
-			display: grid;
-			grid-template-columns: subgrid;
-			grid-template-rows: subgrid;
-			justify-items: end;
+      display: flex;
+      gap: 0.5em;
+
+      margin: auto;
 		}
 
 		.FiringArc__span {
-			grid-column: 1 / -1;
+      margin: auto;
 		}
 	}
 </style>
