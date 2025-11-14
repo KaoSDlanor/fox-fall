@@ -12,6 +12,18 @@ export enum BackdropMode {
 	Grid = 'overlay',
 }
 
+export enum RangeFinderMode {
+	None = 'none',
+	Circular = 'circular',
+	Detailed = 'detailed',
+}
+
+export enum SpreadMode {
+	None = 'none',
+	Circular = 'circular',
+	Detailed = 'detailed',
+}
+
 export enum MapSource {
 	Vanilla = 'vanilla',
 	ImprovedMapModRustardKnightEdit = 'improved-map-mod-rustard-knight-edit',
@@ -27,12 +39,13 @@ export const settings = ref({
 	backdropMode: isOverlay ? BackdropMode.Grid : BackdropMode.Map,
 	mapSource: MapSource.ImprovedMapModRustardKnightEdit,
 	userMode: UserMode.Advanced,
+	rangeFinderMode: RangeFinderMode.Detailed,
+	spreadMode: SpreadMode.Detailed,
 
 	overlayAlwaysVisible: false,
 	useNatoAlphabet: true,
 	showTooltip: true,
 	showWindTooltip: true,
-	showWindMeters: false,
 	hidePinnedHeaders: false,
 	toggleButtonScale: 1,
 	unitIconScale: 1,

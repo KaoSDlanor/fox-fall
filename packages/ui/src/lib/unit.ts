@@ -152,11 +152,7 @@ export const setUnitResolvedVector = (
 	const currentVector = getUnitResolvedVector(unitMap, unitId);
 	const newVector = currentVector.getRelativeOffset(newPosition);
 
-	if (unit.parentId != null) {
-		unit.vector = Vector.fromAngularVector(unit.vector).addVector(
-			newVector
-		).angularVector;
-	} else {
-		unit.vector = newVector.angularVector;
-	}
+	unit.vector = Vector.fromAngularVector(unit.vector).addVector(
+		newVector
+	).angularVector;
 };

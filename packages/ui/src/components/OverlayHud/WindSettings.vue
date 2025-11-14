@@ -39,25 +39,6 @@
 					"
 				/>
 			</div>
-			<div
-				class="Wind__information__item"
-				v-if="windMultiplier && settings.showWindMeters"
-			>
-				<label>Distance:</label>
-				<DistanceInput
-					:model-value="
-						artillery.sharedState.currentState.value.wind.distance *
-						windMultiplier
-					"
-					@update:model-value="
-						artillery.sharedState.produceUpdate(() => {
-							artillery.sharedState.currentState.value.wind.distance =
-								$event / windMultiplier!;
-							syncedRoom.updateWind();
-						})
-					"
-				/>
-			</div>
 			<PrimeButton
 				v-if="artillery.overlayOpen.value"
 				class="Wind__information__button"
@@ -103,31 +84,12 @@
 	import { computed, shallowRef } from 'vue';
 	import FoxDialog from '@/components/FoxDialog.vue';
 	import DirectionInput from '@/components/inputs/DirectionInput/DirectionInput.vue';
-	import DistanceInput from '@/components/inputs/DistanceInput.vue';
 	import NumberInput from '@/components/inputs/NumberInput.vue';
 	import { artillery, syncedRoom } from '@/lib/globals';
-	import { settings } from '@/lib/settings';
-	import { getUnitSpecs } from '@/lib/unit';
 	import { useFieldGroup } from '@/mixins/form';
 
 	const directionInput = shallowRef<InstanceType<typeof DirectionInput>>(null!);
 	const tierInput = shallowRef<InstanceType<typeof NumberInput>>(null!);
-
-	const windMultiplier = computed(() => {
-		const windOffsets = Object.keys(
-			artillery.sharedState.currentState.value.unitMap
-		)
-			.map(
-				(unitId) =>
-					getUnitSpecs(artillery.sharedState.currentState.value.unitMap, unitId)
-						?.WIND_OFFSET
-			)
-			.filter((windOffset) => windOffset != null);
-		if (windOffsets.length > 0)
-			return windOffsets.reduce((a, b) => a + b, 0) / windOffsets.length;
-
-		return null;
-	});
 
 	useFieldGroup({
 		inputs: computed(() => [directionInput.value, tierInput.value]),

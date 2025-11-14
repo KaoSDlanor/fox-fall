@@ -13,11 +13,17 @@ import { Vector } from '@packages/data/dist/artillery/vector';
 import { KeyboardCommand } from '@packages/data/dist/keyboard-config';
 import { settings } from '@/lib/settings';
 import { sharedState } from '@/lib/shared-state';
-import { createUnit, getUnitResolvedVector, getUnitSpecs, setUnitResolvedVector } from '@/lib/unit';
+import {
+	createUnit,
+	getUnitResolvedVector,
+	getUnitSpecs,
+	setUnitResolvedVector,
+} from '@/lib/unit';
 import { Viewport } from '@/lib/viewport';
 import { usePrimaryUnitsByType } from './focused-units';
 import { useViewportControl } from './viewport-control';
 import { useUnitSet } from './unit-group';
+import { toDegrees, toRadians } from '@packages/data/dist/artillery/angle';
 
 type ArtilleryOptions = {
 	containerElement?: Ref<HTMLElement | null>;
@@ -206,12 +212,16 @@ export const useArtillery = (options: ArtilleryOptions = {}) => {
 		}
 	};
 
-	const getWindOffset = (unitId: string) => {
+	const getWindOffsetPerMeter = (unitId: string) => {
 		const specs = getUnitSpecs(sharedState.currentState.value.unitMap, unitId);
 		if (specs == null) return Vector.fromCartesianVector({ x: 0, y: 0 });
 		return Vector.fromAngularVector(sharedState.currentState.value.wind).scale(
-			specs.WIND_OFFSET
+			specs.WIND_OFFSET_PER_METER
 		);
+	};
+
+	const getWindOffset = (unitId: string, targetDistance: number) => {
+		return getWindOffsetPerMeter(unitId).scale(targetDistance);
 	};
 
 	const getFiringVector = (artilleryId: string, targetId: string) => {
@@ -232,7 +242,7 @@ export const useArtillery = (options: ArtilleryOptions = {}) => {
 		);
 		const firingVector = resolvedArtillery.getRelativeOffset(resolvedTarget);
 		const firingVectorWithWind = firingVector.addVector(
-			getWindOffset(selectedArtilleryUnit.id).scale(-1)
+			getWindOffset(selectedArtilleryUnit.id, firingVector.distance).scale(-1)
 		);
 		return firingVectorWithWind;
 	};
@@ -404,9 +414,45 @@ export const useArtillery = (options: ArtilleryOptions = {}) => {
 		},
 		set(value: Vector) {
 			if (selectedFiringPair.value == null) return;
+
 			const artilleryPosition = getUnitResolvedVector(sharedState.currentState.value.unitMap, selectedFiringPair.value.artillery);
-			const windOffset = getWindOffset(selectedFiringPair.value.artillery);
-			setUnitResolvedVector(sharedState.currentState.value.unitMap, selectedFiringPair.value.target, artilleryPosition.addVector(value).addVector(windOffset));
+			if (value.distance === 0) {
+				setUnitResolvedVector(sharedState.currentState.value.unitMap, selectedFiringPair.value.target, artilleryPosition);
+				options.onUnitUpdated?.(selectedFiringPair.value.target);
+				return;
+			}
+			const specs = getUnitSpecs(
+				sharedState.currentState.value.unitMap,
+				selectedFiringPair.value.artillery
+			);
+			if (sharedState.currentState.value.wind.distance === 0 || specs == null) {
+				setUnitResolvedVector(sharedState.currentState.value.unitMap, selectedFiringPair.value.target, artilleryPosition.addVector(value));
+				options.onUnitUpdated?.(selectedFiringPair.value.target);
+				return;
+			}
+
+			const windAngleToFiringAngle =
+				sharedState.currentState.value.wind.azimuth -
+				value.azimuth;
+			const targetAngleToFiringAngle = toDegrees(
+				Math.asin(
+					specs.WIND_OFFSET_PER_METER *
+						sharedState.currentState.value.wind.distance *
+						Math.sin(toRadians(windAngleToFiringAngle)) *
+						-1
+				)
+			);
+			const targetAngleToWindAngle =
+				180 - targetAngleToFiringAngle - windAngleToFiringAngle;
+
+			const targetAzimuth =
+				value.azimuth - targetAngleToFiringAngle;
+			const targetDistance =
+				(value.distance *
+					Math.sin(toRadians(windAngleToFiringAngle))) /
+				Math.sin(toRadians(targetAngleToWindAngle));
+
+			setUnitResolvedVector(sharedState.currentState.value.unitMap, selectedFiringPair.value.target, artilleryPosition.addVector(Vector.fromAngularVector({ azimuth: targetAzimuth, distance: targetDistance })));
 			options.onUnitUpdated?.(selectedFiringPair.value.target);
 		},
 	});
@@ -508,7 +554,12 @@ export const useArtillery = (options: ArtilleryOptions = {}) => {
 			);
 			const predictedLandingPosition = artilleryPosition
 				.addVector(firingSolution)
-				.addVector(getWindOffset(selectedFiringPair.value.artillery));
+				.addVector(
+					getWindOffset(
+						selectedFiringPair.value.artillery,
+						firingSolution.distance
+					)
+				);
 			const actualLandingPosition = getUnitResolvedVector(
 				sharedState.currentState.value.unitMap,
 				unit.id

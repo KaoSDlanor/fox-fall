@@ -205,7 +205,7 @@
 
 	const firingVectorWithWind = computed(() =>
 		firingVector.value.addVector(
-			artillery.getWindOffset(props.unitIdFrom).scale(-1)
+			artillery.getWindOffset(props.unitIdFrom, firingVector.value.distance).scale(-1)
 		)
 	);
 
