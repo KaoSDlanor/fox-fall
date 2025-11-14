@@ -182,14 +182,6 @@
 							/>
 						</div>
 						<div class="Settings__row">
-							<label>Show wind meters</label>
-							<PrimeCheckBox
-								binary
-								v-model="settings.showWindMeters"
-								@update:model-value="saveSettings"
-							/>
-						</div>
-						<div class="Settings__row">
 							<label>Compass opacity</label>
 							<NumberInput
 								:model-value="Math.floor(settings.compassOpacity * 100)"
@@ -212,6 +204,36 @@
 								"
 								:fraction-digits="0"
 								:min="0"
+							/>
+						</div>
+						<div class="Settings__row">
+							<label>Range finder mode</label>
+							<FoxSelect
+								:options="
+									new Map(
+										Object.keys(RangeFinderMode).map((rangeFinderMode) => [
+											RangeFinderMode[rangeFinderMode as keyof typeof RangeFinderMode],
+											{ label: rangeFinderMode },
+										])
+									)
+								"
+								v-model="settings.rangeFinderMode"
+								@update:model-value="saveSettings"
+							/>
+						</div>
+						<div class="Settings__row">
+							<label>Spread mode</label>
+							<FoxSelect
+								:options="
+									new Map(
+										Object.keys(SpreadMode).map((spreadMode) => [
+											SpreadMode[spreadMode as keyof typeof SpreadMode],
+											{ label: spreadMode },
+										])
+									)
+								"
+								v-model="settings.spreadMode"
+								@update:model-value="saveSettings"
 							/>
 						</div>
 						<div class="Settings__row">
@@ -380,8 +402,10 @@
 	import {
 		BackdropMode,
 		MapSource,
+		RangeFinderMode,
 		saveSettings,
 		settings,
+		SpreadMode,
 		// UserMode,
 	} from '@/lib/settings';
 
