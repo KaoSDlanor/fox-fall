@@ -396,9 +396,16 @@ export const useArtillery = (options: ArtilleryOptions = {}) => {
 		set(value: Vector) {
 			if (selectedFiringPair.value == null) return;
 
-			const artilleryPosition = getUnitResolvedVector(sharedState.currentState.value.unitMap, selectedFiringPair.value.artillery);
+			const artilleryPosition = getUnitResolvedVector(
+				sharedState.currentState.value.unitMap,
+				selectedFiringPair.value.artillery
+			);
 			if (value.distance === 0) {
-				setUnitResolvedVector(sharedState.currentState.value.unitMap, selectedFiringPair.value.target, artilleryPosition);
+				setUnitResolvedVector(
+					sharedState.currentState.value.unitMap,
+					selectedFiringPair.value.target,
+					artilleryPosition
+				);
 				options.onUnitUpdated?.(selectedFiringPair.value.target);
 				return;
 			}
@@ -407,14 +414,17 @@ export const useArtillery = (options: ArtilleryOptions = {}) => {
 				selectedFiringPair.value.artillery
 			);
 			if (sharedState.currentState.value.wind.distance === 0 || specs == null) {
-				setUnitResolvedVector(sharedState.currentState.value.unitMap, selectedFiringPair.value.target, artilleryPosition.addVector(value));
+				setUnitResolvedVector(
+					sharedState.currentState.value.unitMap,
+					selectedFiringPair.value.target,
+					artilleryPosition.addVector(value)
+				);
 				options.onUnitUpdated?.(selectedFiringPair.value.target);
 				return;
 			}
 
 			const windAngleToFiringAngle =
-				sharedState.currentState.value.wind.azimuth -
-				value.azimuth;
+				sharedState.currentState.value.wind.azimuth - value.azimuth;
 			const targetAngleToFiringAngle = toDegrees(
 				Math.asin(
 					specs.WIND_OFFSET_PER_METER *
@@ -426,14 +436,21 @@ export const useArtillery = (options: ArtilleryOptions = {}) => {
 			const targetAngleToWindAngle =
 				180 - targetAngleToFiringAngle - windAngleToFiringAngle;
 
-			const targetAzimuth =
-				value.azimuth - targetAngleToFiringAngle;
+			const targetAzimuth = value.azimuth - targetAngleToFiringAngle;
 			const targetDistance =
-				(value.distance *
-					Math.sin(toRadians(windAngleToFiringAngle))) /
+				(value.distance * Math.sin(toRadians(windAngleToFiringAngle))) /
 				Math.sin(toRadians(targetAngleToWindAngle));
 
-			setUnitResolvedVector(sharedState.currentState.value.unitMap, selectedFiringPair.value.target, artilleryPosition.addVector(Vector.fromAngularVector({ azimuth: targetAzimuth, distance: targetDistance })));
+			setUnitResolvedVector(
+				sharedState.currentState.value.unitMap,
+				selectedFiringPair.value.target,
+				artilleryPosition.addVector(
+					Vector.fromAngularVector({
+						azimuth: targetAzimuth,
+						distance: targetDistance,
+					})
+				)
+			);
 			options.onUnitUpdated?.(selectedFiringPair.value.target);
 		},
 	});
