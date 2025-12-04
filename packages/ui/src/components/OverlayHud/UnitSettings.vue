@@ -3,9 +3,6 @@
 		v-show="artillery.overlayOpen.value || pinned"
 		v-bind="$attrs"
 		class="UnitSettings__dialog"
-		:class="
-			unit != null ? `UnitSettings__dialog--type-${unit.type}` : undefined
-		"
 		v-model:visible="visible"
 		v-model:pinned="pinned"
 		:default-position-override="
@@ -14,6 +11,8 @@
 		v-model:position-override="positionOverride"
 		:disable-close="props.isBaseUnit && !props.unitId"
 		:persist-position-id="props.persistPositionId"
+		:aria-unit-id="props.unitId"
+		:aria-unit-type="unit?.type"
 	>
 		<template #header>
 			<span class="UnitSettings__header-content">
@@ -50,7 +49,7 @@
 				v-else-if="unit != null && !separatedUnits.has(unit.id)"
 				class="FoxDialog__header-action"
 				severity="secondary"
-				@pointerdown.stop="separatedUnits.add(unit.id)"
+				@pointerdown.stop.prevent="separatedUnits.add(unit.id)"
 				title="Open dedicated unit settings"
 			>
 				<i class="pi pi-window-maximize" />
@@ -189,6 +188,7 @@
 							<div class="UnitSettings__row">
 								<span>Sighted from:</span>
 								<SelectOneUnit
+									:key="props.unitId"
 									class="UnitSettings__select"
 									:black-list="{ id: [unit.id] }"
 									:model-value="unit.parentId"
@@ -476,7 +476,12 @@
 			v-if="artillery.sharedState.currentState.value.unitMap[unitId] != null"
 			:unit-id="unitId"
 			:default-position-override="positionOverride"
-			@update:visible="!$event && separatedUnits.delete(unitId)"
+			@update:visible="
+				!$event &&
+					separatedUnits.delete(unitId) &&
+					artillery.selectedUnit.value === unitId &&
+					(artillery.selectedUnit.value = null)
+			"
 		/>
 	</template>
 </template>
@@ -742,7 +747,7 @@
 			}
 		}
 	);
-	+useFieldGroup({
+	useFieldGroup({
 		inputs: computed(() => [distanceInput.value, azimuthInput.value]),
 		onLastSubmit() {
 			unit.value?.type === UnitType.LandingZone &&

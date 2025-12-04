@@ -1,18 +1,14 @@
 <template>
-	<Teleport
-		:to="pinned || moving ? 'body' : artillery.containerElement.value"
-		v-if="(visible && artillery.containerElement.value) || pinned"
-	>
+	<Teleport to="body">
 		<div
 			ref="containerElement"
 			class="FoxDialog__container"
 			:class="{
-				FoxDialog__calibrating: artillery.viewportControl.calibrating.value,
-				FoxDialog__screenshot: artillery.viewportControl.screenShotting.value,
 				'FoxDialog__container-rolled-up': rolledUp,
 				'FoxDialog__container-move-mode': moveMode,
 				'FoxDialog__container-moving': moving != null,
-				MouseCapture: pinned,
+				'FoxDialog__container-visible': resolvedVisibility,
+				MouseCapture: pinned || focusedRecently,
 			}"
 			v-bind="$attrs"
 			:style="containerStyle"
@@ -204,8 +200,7 @@
 			z-index: 4;
 		}
 
-		&.FoxDialog__container-calibrating,
-		&.FoxDialog__container-screenshot {
+		&:not(.FoxDialog__container-visible) {
 			opacity: 0;
 			pointer-events: none;
 		}
@@ -315,8 +310,11 @@
 
 <script setup lang="ts">
 	import {
+		until,
 		useElementBounding,
 		useEventListener,
+		useFocus,
+		useFocusWithin,
 		useWindowSize,
 	} from '@vueuse/core';
 	import PrimeButton from 'primevue/button';
@@ -355,6 +353,39 @@
 	const positionOverride = defineModel<PositionOverride | undefined>(
 		'positionOverride'
 	);
+
+	const { focused: hasFocusWithin } = useFocusWithin(containerElement);
+	const { focused: hasFocusContainer } = useFocus(containerElement);
+	const hasFocus = computed(
+		() => hasFocusWithin.value || hasFocusContainer.value
+	);
+	const focusedRecently = ref(hasFocus.value);
+	watch(hasFocus, (value) => {
+		if (value) {
+			focusedRecently.value = true;
+		} else {
+			Promise.race([
+				new Promise((resolve) => setTimeout(resolve, 100)),
+				until(hasFocus).toBe(true),
+			]).then(() => {
+				focusedRecently.value = hasFocus.value;
+			});
+		}
+	});
+
+	const resolvedVisibility = computed(() => {
+		if (
+			artillery.viewportControl.calibrating.value ||
+			artillery.viewportControl.screenShotting.value
+		)
+			return false;
+		return (
+			pinned.value ||
+			moving.value != null ||
+			focusedRecently.value ||
+			(artillery.overlayOpen.value && visible.value)
+		);
+	});
 
 	const position = computed(() => {
 		return positionOverride.value ?? props.defaultPositionOverride;
@@ -411,7 +442,9 @@
 			if (!pinned.value && !props.disableClose) {
 				visible.value = false;
 			} else {
-				(containerElement.value!.querySelector(':focus') as HTMLElement)?.blur();
+				(
+					containerElement.value!.querySelector(':focus') as HTMLElement
+				)?.blur();
 				artillery.checkWindowFocus();
 			}
 		}
@@ -454,7 +487,6 @@
 		containerElement.value!.releasePointerCapture(event.pointerId);
 		moving.value = null;
 		moveMode.value = false;
-		artillery.checkWindowFocus();
 	};
 
 	const onPointerMove = (event: PointerEvent) => {
@@ -578,4 +610,10 @@
 		},
 		{ immediate: true }
 	);
+
+	watch(focusedRecently, (value) => {
+		if (!value) {
+			artillery.checkWindowFocus();
+		}
+	});
 </script>

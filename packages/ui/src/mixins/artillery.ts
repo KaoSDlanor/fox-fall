@@ -1,6 +1,7 @@
 import {
 	computed,
 	getCurrentScope,
+	nextTick,
 	type Ref,
 	ref,
 	watch,
@@ -247,17 +248,36 @@ export const useArtillery = (options: ArtilleryOptions = {}) => {
 		return firingVectorWithWind;
 	};
 
-	const calibrateWind = async () => {
+	const editUnit = async (unitId: string) => {
+		selectedUnit.value = unitId;
+		await nextTick();
 		const visibleInput = document.querySelector(
-			`.UnitSettings__dialog--type-${UnitType.LandingZone} .DistanceInput__container input`
+			`.UnitSettings__dialog[aria-unit-id="${unitId}"] .DistanceInput__container input`
 		) as HTMLInputElement | null;
 		if (visibleInput != null) {
 			visibleInput.select();
 			window.electronApi?.focusOverlay();
-			return;
 		}
 
+		return currentScope.run(() => {
+			return until(computed(() => selectedUnit.value !== unitId)).toBe(true);
+		});
+	};
+
+	const calibrateWind = async () => {
 		assertCanEditWind();
+
+		const existingLandingZone = Object.keys(
+			sharedState.currentState.value.unitMap
+		).find(
+			(unitId) =>
+				sharedState.currentState.value.unitMap[unitId].type ===
+				UnitType.LandingZone
+		);
+		if (existingLandingZone != null) {
+			return editUnit(existingLandingZone);
+		}
+
 		const availableUnits = Object.keys(
 			sharedState.currentState.value.unitMap
 		).filter(
@@ -296,9 +316,6 @@ export const useArtillery = (options: ArtilleryOptions = {}) => {
 			baseUnit = sharedState.currentState.value.unitMap[baseUnit].parentId!;
 		}
 
-		const initalSelectedUnit = selectedUnit.value;
-		const overlayWasOpen = overlayOpen.value;
-
 		const newUnit = addUnit(
 			UnitType.LandingZone,
 			undefined,
@@ -307,53 +324,38 @@ export const useArtillery = (options: ArtilleryOptions = {}) => {
 		);
 		// TODO : move selectUnitOnDeletion to a map outside of the shared state
 		newUnit.value.selectUnitOnDeletion = originalBaseUnit ?? baseUnit;
-		selectedUnit.value = newUnit.value.id;
-		if (!overlayWasOpen) {
-			window.electronApi?.toggleOverlay();
-		}
-
-		overlayOpen.value = true;
-		currentScope.run(() => {
-			until(
-				computed(
-					() => selectedUnit.value !== newUnit.value.id || !overlayOpen.value
-				)
-			)
-				.toBe(true)
-				.then(() => {
-					if (
-						selectedUnit.value === newUnit.value.id ||
-						selectedUnit.value == null
-					) {
-						selectedUnit.value = initalSelectedUnit;
-					}
-					removeUnit(newUnit.value.id);
-					if (!overlayWasOpen && overlayOpen.value) {
-						window.electronApi?.toggleOverlay();
-					}
-				});
-		});
+		await editUnit(newUnit.value.id);
+		removeUnit(newUnit.value.id);
 	};
 
 	const editTarget = async () => {
-		const visibleInput = document.querySelector(
-			`.UnitSettings__dialog--type-${UnitType.Target} .DistanceInput__container input`
-		) as HTMLInputElement | null;
-		if (visibleInput != null) {
-			visibleInput.select();
-			window.electronApi?.focusOverlay();
-			return;
-		}
-
-		const targets = Object.keys(sharedState.currentState.value.unitMap).filter(
-			(unitId) =>
-				sharedState.currentState.value.unitMap[unitId].type ===
-					UnitType.Target &&
-				sharedState.currentState.value.unitMap[unitId].parentId != null
-		);
-		const target = targets.includes(selectedUnit.value!)
-			? selectedUnit.value
-			: targets[0];
+		const targets = Object.keys(sharedState.currentState.value.unitMap)
+			.filter(
+				(unitId) =>
+					sharedState.currentState.value.unitMap[unitId].type ===
+						UnitType.Target &&
+					sharedState.currentState.value.unitMap[unitId].parentId != null
+			)
+			.sort((targetA, targetB) => {
+				const selectedUnitPreference =
+					(selectedUnit.value === targetA ? -1 : 1) -
+					(selectedUnit.value === targetB ? -1 : 1);
+				if (selectedUnitPreference !== 0) return selectedUnitPreference;
+				const isPinnedPreference =
+					(pinnedUnits.value.has(targetA) ? -1 : 1) -
+					(pinnedUnits.value.has(targetB) ? -1 : 1);
+				if (isPinnedPreference !== 0) return isPinnedPreference;
+				const hasParentPreference =
+					(sharedState.currentState.value.unitMap[targetA].parentId != null
+						? -1
+						: 1) -
+					(sharedState.currentState.value.unitMap[targetB].parentId != null
+						? -1
+						: 1);
+				if (hasParentPreference !== 0) return hasParentPreference;
+				return targetA.localeCompare(targetB);
+			});
+		const target = targets[0];
 		if (target == null) {
 			new Notification('FoxFall error', {
 				body: Object.keys(sharedState.currentState.value.unitMap).some(
@@ -366,28 +368,7 @@ export const useArtillery = (options: ArtilleryOptions = {}) => {
 			});
 			return;
 		}
-
-		const initalSelectedUnit = selectedUnit.value;
-		const overlayWasOpen = overlayOpen.value;
-
-		selectedUnit.value = target;
-		if (!overlayWasOpen) {
-			window.electronApi?.toggleOverlay();
-		}
-
-		overlayOpen.value = true;
-		currentScope.run(() => {
-			until(computed(() => selectedUnit.value !== target || !overlayOpen.value))
-				.toBe(true)
-				.then(() => {
-					if (selectedUnit.value === target || selectedUnit.value == null) {
-						selectedUnit.value = initalSelectedUnit;
-					}
-					if (!overlayWasOpen && overlayOpen.value) {
-						window.electronApi?.toggleOverlay();
-					}
-				});
-		});
+		return editUnit(target);
 	};
 
 	const primaryUnitsByType = usePrimaryUnitsByType();
@@ -719,20 +700,6 @@ export const useArtillery = (options: ArtilleryOptions = {}) => {
 		},
 		{ immediate: true }
 	);
-
-	watch(
-		overlayOpen,
-		(open) => {
-			if (open) {
-				(document.activeElement as HTMLElement)?.blur?.();
-			}
-		},
-		{ immediate: true }
-	);
-
-	useEventListener('blur', () => {
-		(document.activeElement as HTMLElement)?.blur?.();
-	});
 
 	return {
 		addUnit,
