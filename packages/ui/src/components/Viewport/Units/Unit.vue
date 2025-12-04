@@ -143,7 +143,6 @@
 		getUnitIcon,
 		getUnitLabel,
 		getUnitResolvedVector,
-		getUnitSpecs,
 	} from '@/lib/unit';
 
 	const iconElement = shallowRef<InstanceType<typeof ArtilleryIcon>>(null!);
@@ -339,18 +338,6 @@
 	);
 
 	const firingPosition = computed(() => {
-		let firingVectorWithWind = resolvedVector.value.clone();
-		const specs = getUnitSpecs(
-			artillery.sharedState.currentState.value.unitMap,
-			unit.value.id
-		);
-		if (specs) {
-			firingVectorWithWind = firingVectorWithWind.addVector(
-				Vector.fromAngularVector(
-					artillery.sharedState.currentState.value.wind
-				).scale(-specs.WIND_OFFSET)
-			);
-		}
-		return firingVectorWithWind;
+		return resolvedVector.value.addVector(artillery.getWindOffset(unit.value.id, resolvedVector.value.distance).scale(-1));
 	});
 </script>

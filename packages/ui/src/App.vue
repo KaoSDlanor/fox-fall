@@ -197,8 +197,8 @@
 	import { artillery } from '@/lib/globals';
 	import { BackdropMode, settings } from '@/lib/settings';
 	import { getUnitResolvedVector } from '@/lib/unit';
-	import PositionedElement from './components/Viewport/PositionedElement.vue';
-	import { LAYER } from './lib/constants/ui';
+	import PositionedElement from '@/components/Viewport/PositionedElement.vue';
+	import { LAYER } from '@/lib/constants/ui';
 
 	const onPointerMove = (event: PointerEvent) => {
 		artillery.cursor.value.cartesianVector = {
@@ -243,7 +243,14 @@
 		contextMenuPosition.value = null;
 	};
 
-	watch(() => settings.value.fontScale, () => {
-		document.documentElement.style.setProperty('--_ui-scale', String(settings.value.fontScale));
-	}, { immediate: true });
+	watch(
+		() => settings.value.fontScale,
+		() => {
+			document.documentElement.style.setProperty(
+				'--_ui-scale',
+				String(settings.value.fontScale)
+			);
+		},
+		{ immediate: true }
+	);
 </script>
