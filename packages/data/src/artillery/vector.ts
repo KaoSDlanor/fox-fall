@@ -173,4 +173,8 @@ export class Vector {
 	public getAngleTo(vector: Vector): number {
 		return wrapDegrees(vector.azimuth - this.azimuth);
 	}
+
+	public dotProduct(vector: Vector): number {
+		return this.x * vector.x + this.y * vector.y;
+	}
 }

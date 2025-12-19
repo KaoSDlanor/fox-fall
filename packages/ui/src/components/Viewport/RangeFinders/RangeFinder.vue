@@ -15,12 +15,8 @@
 			preserve-aspect-ratio="none"
 		>
 			<Disk
-				:outerRadius="
-					props.outerRadius * artillery.viewport.value.resolvedZoom
-				"
-				:innerRadius="
-					props.innerRadius * artillery.viewport.value.resolvedZoom
-				"
+				:outerRadius="props.outerRadius * artillery.viewport.value.resolvedZoom"
+				:innerRadius="props.innerRadius * artillery.viewport.value.resolvedZoom"
 			/>
 		</svg>
 	</PositionedElement>
