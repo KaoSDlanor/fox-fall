@@ -66,12 +66,14 @@
 								autofocus
 								:model-value="unit.vector.distance"
 								@update:model-value="
-									artillery.sharedState.produceUpdate(() => {
-										artillery.sharedState.currentState.value.unitMap[
-											unit!.id
-										].vector.distance = $event;
-										syncedRoom.updateUnit(unit!.id);
-									})
+									artillery.sharedState.produceUpdate(() =>
+										withHandling(() => {
+											artillery.sharedState.currentState.value.unitMap[
+												unit!.id
+											].vector.distance = $event;
+											syncedRoom.updateUnit(unit!.id);
+										})
+									)
 								"
 							/>
 						</div>
@@ -81,12 +83,14 @@
 								ref="azimuthInput"
 								:model-value="wrapDegrees(unit.vector.azimuth)"
 								@update:model-value="
-									artillery.sharedState.produceUpdate(() => {
-										artillery.sharedState.currentState.value.unitMap[
-											unit!.id
-										].vector.azimuth = wrapDegrees($event);
-										syncedRoom.updateUnit(unit!.id);
-									})
+									artillery.sharedState.produceUpdate(() =>
+										withHandling(() => {
+											artillery.sharedState.currentState.value.unitMap[
+												unit!.id
+											].vector.azimuth = wrapDegrees($event);
+											syncedRoom.updateUnit(unit!.id);
+										})
+									)
 								"
 							/>
 						</div>
@@ -98,10 +102,12 @@
 								class="UnitSettings__select"
 								:model-value="unit.type"
 								@update:model-value="
-									artillery.sharedState.produceUpdate(() => {
-										unit!.type = $event;
-										syncedRoom.updateUnit(unit!.id);
-									})
+									artillery.sharedState.produceUpdate(() =>
+										withHandling(() => {
+											unit!.type = $event;
+											syncedRoom.updateUnit(unit!.id);
+										})
+									)
 								"
 								:disabled="props.readonly"
 								:autofocus="!parent"
@@ -119,26 +125,29 @@
 									class="UnitSettings__select"
 									:model-value="unit.ammunition"
 									@update:model-value="
-										artillery.sharedState.produceUpdate(() => {
-											artillery.sharedState.currentState.value.unitMap[
-												unit!.id
-											].ammunition = $event;
-											artillery.sharedState.currentState.value.unitMap[unit!.id]
-												.ammunition &&
-												!ARTILLERY_BY_SHELL[
-													artillery.sharedState.currentState.value.unitMap[
-														unit!.id
-													].ammunition!
-												]?.PLATFORM[
-													artillery.sharedState.currentState.value.unitMap[
-														unit!.id
-													].platform!
-												] &&
-												(artillery.sharedState.currentState.value.unitMap[
+										artillery.sharedState.produceUpdate(() =>
+											withHandling(() => {
+												artillery.sharedState.currentState.value.unitMap[
 													unit!.id
-												].platform = undefined);
-											syncedRoom.updateUnit(unit!.id);
-										})
+												].ammunition = $event;
+												artillery.sharedState.currentState.value.unitMap[
+													unit!.id
+												].ammunition &&
+													!ARTILLERY_BY_SHELL[
+														artillery.sharedState.currentState.value.unitMap[
+															unit!.id
+														].ammunition!
+													]?.PLATFORM[
+														artillery.sharedState.currentState.value.unitMap[
+															unit!.id
+														].platform!
+													] &&
+													(artillery.sharedState.currentState.value.unitMap[
+														unit!.id
+													].platform = undefined);
+												syncedRoom.updateUnit(unit!.id);
+											})
+										)
 									"
 									:disabled="props.readonly"
 								/>
@@ -153,12 +162,14 @@
 									:ammo-type="unit.ammunition"
 									:model-value="unit.platform"
 									@update:model-value="
-										artillery.sharedState.produceUpdate(() => {
-											artillery.sharedState.currentState.value.unitMap[
-												unit!.id
-											].platform = $event;
-											syncedRoom.updateUnit(unit!.id);
-										})
+										artillery.sharedState.produceUpdate(() =>
+											withHandling(() => {
+												artillery.sharedState.currentState.value.unitMap[
+													unit!.id
+												].platform = $event;
+												syncedRoom.updateUnit(unit!.id);
+											})
+										)
 									"
 									:disabled="props.readonly"
 								/>
@@ -174,10 +185,12 @@
 									enable-clear
 									:model-value="unit.spottingType"
 									@update:model-value="
-										artillery.sharedState.produceUpdate(() => {
-											unit!.spottingType = $event;
-											syncedRoom.updateUnit(unit!.id);
-										})
+										artillery.sharedState.produceUpdate(() =>
+											withHandling(() => {
+												unit!.spottingType = $event;
+												syncedRoom.updateUnit(unit!.id);
+											})
+										)
 									"
 									:disabled="props.readonly"
 									:options="spottingTypeOptions"
@@ -195,7 +208,9 @@
 									:disabled="props.readonly"
 									@update:model-value="
 										artillery.sharedState.produceUpdate(() =>
-											artillery.setUnitSource(unit!.id, $event)
+											withHandling(() =>
+												artillery.setUnitSource(unit!.id, $event)
+											)
 										)
 									"
 								/>
@@ -207,14 +222,16 @@
 								:readonly="props.readonly"
 								:model-value="unit.label ?? ''"
 								@update:model-value="
-									artillery.sharedState.produceUpdate(() => {
-										unit!.label = $event ?? undefined;
-										syncedRoom.updateUnit(unit!.id);
-									})
+									artillery.sharedState.produceUpdate(() =>
+										withHandling(() => {
+											unit!.label = $event ?? undefined;
+											syncedRoom.updateUnit(unit!.id);
+										})
+									)
 								"
 								@input="
 									artillery.sharedState.produceUpdate(() =>
-										syncedRoom.updateUnit(unit!.id)
+										withHandling(() => syncedRoom.updateUnit(unit!.id))
 									)
 								"
 							/>
@@ -232,12 +249,14 @@
 									autofocus
 									:model-value="unit.vector.distance"
 									@update:model-value="
-										artillery.sharedState.produceUpdate(() => {
-											artillery.sharedState.currentState.value.unitMap[
-												unit!.id
-											].vector.distance = $event;
-											syncedRoom.updateUnit(unit!.id);
-										})
+										artillery.sharedState.produceUpdate(() =>
+											withHandling(() => {
+												artillery.sharedState.currentState.value.unitMap[
+													unit!.id
+												].vector.distance = $event;
+												syncedRoom.updateUnit(unit!.id);
+											})
+										)
 									"
 								/>
 							</div>
@@ -247,12 +266,14 @@
 									ref="azimuthInput"
 									:model-value="wrapDegrees(unit.vector.azimuth)"
 									@update:model-value="
-										artillery.sharedState.produceUpdate(() => {
-											artillery.sharedState.currentState.value.unitMap[
-												unit!.id
-											].vector.azimuth = wrapDegrees($event);
-											syncedRoom.updateUnit(unit!.id);
-										})
+										artillery.sharedState.produceUpdate(() =>
+											withHandling(() => {
+												artillery.sharedState.currentState.value.unitMap[
+													unit!.id
+												].vector.azimuth = wrapDegrees($event);
+												syncedRoom.updateUnit(unit!.id);
+											})
+										)
 									"
 								/>
 							</div>
@@ -265,13 +286,15 @@
 									<DistanceInput
 										:model-value="unit.vector.distance"
 										@update:model-value="
-											artillery.sharedState.produceUpdate(() => {
-												unit!.vector = Object.assign(
-													Vector.fromAngularVector(unit!.vector),
-													{ distance: $event }
-												).angularVector;
-												syncedRoom.updateUnit(unit!.id);
-											})
+											artillery.sharedState.produceUpdate(() =>
+												withHandling(() => {
+													unit!.vector = Object.assign(
+														Vector.fromAngularVector(unit!.vector),
+														{ distance: $event }
+													).angularVector;
+													syncedRoom.updateUnit(unit!.id);
+												})
+											)
 										"
 									/>
 								</div>
@@ -280,13 +303,15 @@
 									<DirectionInput
 										:model-value="wrapDegrees(unit.vector.azimuth + 180)"
 										@update:model-value="
-											artillery.sharedState.produceUpdate(() => {
-												unit!.vector = Object.assign(
-													Vector.fromAngularVector(unit!.vector),
-													{ azimuth: wrapDegrees($event - 180) }
-												).angularVector;
-												syncedRoom.updateUnit(unit!.id);
-											})
+											artillery.sharedState.produceUpdate(() =>
+												withHandling(() => {
+													unit!.vector = Object.assign(
+														Vector.fromAngularVector(unit!.vector),
+														{ azimuth: wrapDegrees($event - 180) }
+													).angularVector;
+													syncedRoom.updateUnit(unit!.id);
+												})
+											)
 										"
 									/>
 								</div>
@@ -296,13 +321,15 @@
 										<DistanceInput
 											:model-value="-Vector.fromAngularVector(unit.vector).x"
 											@update:model-value="
-												artillery.sharedState.produceUpdate(() => {
-													unit!.vector = Object.assign(
-														Vector.fromAngularVector(unit!.vector),
-														{ x: -$event }
-													).angularVector;
-													syncedRoom.updateUnit(unit!.id);
-												})
+												artillery.sharedState.produceUpdate(() =>
+													withHandling(() => {
+														unit!.vector = Object.assign(
+															Vector.fromAngularVector(unit!.vector),
+															{ x: -$event }
+														).angularVector;
+														syncedRoom.updateUnit(unit!.id);
+													})
+												)
 											"
 										/>
 									</div>
@@ -311,13 +338,15 @@
 										<DistanceInput
 											:model-value="-Vector.fromAngularVector(unit.vector).y"
 											@update:model-value="
-												artillery.sharedState.produceUpdate(() => {
-													unit!.vector = Object.assign(
-														Vector.fromAngularVector(unit!.vector),
-														{ y: -$event }
-													).angularVector;
-													syncedRoom.updateUnit(unit!.id);
-												})
+												artillery.sharedState.produceUpdate(() =>
+													withHandling(() => {
+														unit!.vector = Object.assign(
+															Vector.fromAngularVector(unit!.vector),
+															{ y: -$event }
+														).angularVector;
+														syncedRoom.updateUnit(unit!.id);
+													})
+												)
 											"
 										/>
 									</div>
@@ -330,13 +359,15 @@
 								<DistanceInput
 									:model-value="Vector.fromAngularVector(unit.vector).x"
 									@update:model-value="
-										artillery.sharedState.produceUpdate(() => {
-											unit!.vector = Object.assign(
-												Vector.fromAngularVector(unit!.vector),
-												{ x: $event }
-											).angularVector;
-											syncedRoom.updateUnit(unit!.id);
-										})
+										artillery.sharedState.produceUpdate(() =>
+											withHandling(() => {
+												unit!.vector = Object.assign(
+													Vector.fromAngularVector(unit!.vector),
+													{ x: $event }
+												).angularVector;
+												syncedRoom.updateUnit(unit!.id);
+											})
+										)
 									"
 								/>
 							</div>
@@ -345,13 +376,15 @@
 								<DistanceInput
 									:model-value="Vector.fromAngularVector(unit.vector).y"
 									@update:model-value="
-										artillery.sharedState.produceUpdate(() => {
-											unit!.vector = Object.assign(
-												Vector.fromAngularVector(unit!.vector),
-												{ y: $event }
-											).angularVector;
-											syncedRoom.updateUnit(unit!.id);
-										})
+										artillery.sharedState.produceUpdate(() =>
+											withHandling(() => {
+												unit!.vector = Object.assign(
+													Vector.fromAngularVector(unit!.vector),
+													{ y: $event }
+												).angularVector;
+												syncedRoom.updateUnit(unit!.id);
+											})
+										)
 									"
 								/>
 							</div>
@@ -387,10 +420,12 @@
 					<PrimeButton
 						class="UnitSettings__action"
 						@click.stop="
-							artillery.sharedState.produceUpdate(() => {
-								unit!.canDrag = !unit!.canDrag;
-								syncedRoom.updateUnit(unit!.id);
-							})
+							artillery.sharedState.produceUpdate(() =>
+								withHandling(() => {
+									unit!.canDrag = !unit!.canDrag;
+									syncedRoom.updateUnit(unit!.id);
+								})
+							)
 						"
 						:severity="unit.canDrag ? 'success' : 'danger'"
 						title="Can drag"
@@ -420,7 +455,7 @@
 						:disabled="props.readonly"
 						@click.stop="
 							artillery.sharedState.produceUpdate(() =>
-								artillery.removeUnit(unit!.id)
+								withHandling(() => artillery.removeUnit(unit!.id))
 							)
 						"
 						severity="danger"
@@ -431,14 +466,14 @@
 				</div>
 				<div
 					class="UnitSettings__actions"
-					v-if="
-						unit.type === UnitType.LandingZone && !hideDetails
-					"
+					v-if="unit.type === UnitType.LandingZone && !hideDetails"
 				>
 					<PrimeButton
 						class="UnitSettings__action"
 						@click.stop="
-							artillery.sharedState.produceUpdate(() => submitWind())
+							artillery.sharedState.produceUpdate(() =>
+								withHandling(() => submitWind())
+							)
 						"
 						title="Update wind"
 					>
@@ -592,7 +627,10 @@
 	} from '@packages/data/dist/artillery/unit/constants';
 	import { UnitType } from '@packages/data/dist/artillery/unit';
 	import { Vector } from '@packages/data/dist/artillery/vector';
-	import FoxDialog, { type PositionOverride } from '@packages/frontend-libs/dist/FoxDialog.vue';
+	import { withHandling } from '@packages/frontend-libs/dist/error';
+	import FoxDialog, {
+		type PositionOverride,
+	} from '@packages/frontend-libs/dist/FoxDialog.vue';
 	import DragIcon from '@packages/frontend-libs/dist/icons/DragIcon.vue';
 	import PinIcon from '@packages/frontend-libs/dist/icons/PinIcon.vue';
 	import PinOutlineIcon from '@packages/frontend-libs/dist/icons/PinOutlineIcon.vue';
@@ -711,10 +749,12 @@
 		}
 
 		artillery.sharedState.produceUpdate(() =>
-			artillery.editWind(
-				unit.value!.id,
-				langingZoneFiringSolution.value,
-				!pinned.value
+			withHandling(() =>
+				artillery.editWind(
+					unit.value!.id,
+					langingZoneFiringSolution.value,
+					!pinned.value
+				)
 			)
 		);
 
@@ -751,7 +791,9 @@
 		inputs: computed(() => [distanceInput.value, azimuthInput.value]),
 		onLastSubmit() {
 			unit.value?.type === UnitType.LandingZone &&
-				artillery.sharedState.produceUpdate(() => submitWind());
+				artillery.sharedState.produceUpdate(() =>
+					withHandling(() => submitWind())
+				);
 			artillery.checkWindowFocus();
 		},
 	});
@@ -764,7 +806,9 @@
 			].filter((input) => input != null)
 		),
 		onLastSubmit() {
-			artillery.sharedState.produceUpdate(() => submitWind());
+			artillery.sharedState.produceUpdate(() =>
+				withHandling(() => submitWind())
+			);
 			artillery.checkWindowFocus();
 		},
 	});

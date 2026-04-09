@@ -6,11 +6,11 @@
 			:unit="artillery.sharedState.currentState.value.unitMap[unitId]"
 		>
 			<UnitComponent
-				@create-child="($event) => artillery.sharedState.produceUpdate(() => artillery.addUnit($event, undefined, undefined, unitId))"
-				@updated="() => artillery.sharedState.produceUpdate(() => syncedRoom.updateUnit(unitId))"
-				@remove="() => artillery.sharedState.produceUpdate(() => artillery.removeUnit(unitId))"
-				@set-unit-source="($event) => artillery.sharedState.produceUpdate(() => artillery.setUnitSource(unitId, $event))"
-				@update-wind="($event) => artillery.sharedState.produceUpdate(() => artillery.editWind(unitId, $event.firingSolution, $event.removeUnitAfter))"
+				@create-child="($event) => artillery.sharedState.produceUpdate(() => withHandling(() => artillery.addUnit($event, undefined, undefined, unitId)))"
+				@updated="() => artillery.sharedState.produceUpdate(() => withHandling(() => syncedRoom.updateUnit(unitId)))"
+				@remove="() => artillery.sharedState.produceUpdate(() => withHandling(() => artillery.removeUnit(unitId)))"
+				@set-unit-source="($event) => artillery.sharedState.produceUpdate(() => withHandling(() => artillery.setUnitSource(unitId, $event)))"
+				@update-wind="($event) => artillery.sharedState.produceUpdate(() => withHandling(() => artillery.editWind(unitId, $event.firingSolution, $event.removeUnitAfter)))"
 			/>
 		</UnitProvider>
 		<UnitLink
@@ -31,6 +31,7 @@
 </style>
 
 <script setup lang="ts">
+	import { withHandling } from '@packages/frontend-libs/dist/error';
 	import UnitComponent from '@/components/Viewport/Units/Unit.vue';
 	import UnitLink from '@/components/Viewport/UnitLink.vue';
 	import UnitProvider from '@/contexts/unit/UnitProvider.vue';

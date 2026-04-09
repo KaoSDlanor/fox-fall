@@ -12,10 +12,16 @@ import { useEventListener, until } from '@vueuse/core';
 import { type Unit, UnitType } from '@packages/data/dist/artillery/unit';
 import { Vector } from '@packages/data/dist/artillery/vector';
 import { KeyboardCommand } from '@packages/data/dist/keyboard-config';
+import { withHandlingAsync } from '@packages/frontend-libs/dist/error';
 import { Viewport } from '@packages/frontend-libs/dist/viewport/viewport';
 import { settings } from '@/lib/settings';
 import { sharedState } from '@/lib/shared-state';
-import { createUnit, getUnitResolvedVector, getUnitSpecs, setUnitResolvedVector } from '@/lib/unit';
+import {
+	createUnit,
+	getUnitResolvedVector,
+	getUnitSpecs,
+	setUnitResolvedVector,
+} from '@/lib/unit';
 import { usePrimaryUnitsByType } from './focused-units';
 import { useViewportControl } from './viewport-control';
 import { useUnitSet } from './unit-group';
@@ -167,40 +173,34 @@ export function useArtillery(options: ArtilleryOptions = {}) {
 	};
 
 	const setUnitSource = (unitId: string, newParentId?: string) => {
-		try {
-			const unit = sharedState.currentState.value.unitMap[unitId];
-			if (unit == null) return;
+		const unit = sharedState.currentState.value.unitMap[unitId];
+		if (unit == null) return;
 
-			let currentlyCheckingParent = newParentId;
-			while (currentlyCheckingParent != null) {
-				if (currentlyCheckingParent === unitId) {
-					setUnitSource(newParentId!, undefined);
-				}
-				currentlyCheckingParent =
-					sharedState.currentState.value.unitMap[currentlyCheckingParent]
-						?.parentId;
+		let currentlyCheckingParent = newParentId;
+		while (currentlyCheckingParent != null) {
+			if (currentlyCheckingParent === unitId) {
+				setUnitSource(newParentId!, undefined);
 			}
-
-			unit.vector = getUnitResolvedVector(
-				sharedState.currentState.value.unitMap,
-				unitId
-			).angularVector;
-			if (newParentId != null) {
-				unit.vector = Vector.fromAngularVector(unit.vector).addVector(
-					getUnitResolvedVector(
-						sharedState.currentState.value.unitMap,
-						newParentId
-					).scale(-1)
-				).angularVector;
-			}
-			unit.canDrag = newParentId == null;
-			unit.parentId = newParentId;
-			options.onUnitUpdated?.(unitId);
-		} catch (e) {
-			new Notification('FoxFall error', {
-				body: `Failed to set unit source: ${e}`,
-			});
+			currentlyCheckingParent =
+				sharedState.currentState.value.unitMap[currentlyCheckingParent]
+					?.parentId;
 		}
+
+		unit.vector = getUnitResolvedVector(
+			sharedState.currentState.value.unitMap,
+			unitId
+		).angularVector;
+		if (newParentId != null) {
+			unit.vector = Vector.fromAngularVector(unit.vector).addVector(
+				getUnitResolvedVector(
+					sharedState.currentState.value.unitMap,
+					newParentId
+				).scale(-1)
+			).angularVector;
+		}
+		unit.canDrag = newParentId == null;
+		unit.parentId = newParentId;
+		options.onUnitUpdated?.(unitId);
 	};
 
 	const getWindOffset = (unitId: string) => {
@@ -286,10 +286,7 @@ export function useArtillery(options: ArtilleryOptions = {}) {
 
 		let baseUnit = availableUnits[0];
 		if (baseUnit == null) {
-			new Notification('FoxFall error', {
-				body: 'No available target unit found',
-			});
-			return;
+			throw new Error('No available target unit found');
 		}
 		const originalBaseUnit = baseUnit;
 		if (
@@ -343,16 +340,15 @@ export function useArtillery(options: ArtilleryOptions = {}) {
 			});
 		const target = targets[0];
 		if (target == null) {
-			new Notification('FoxFall error', {
-				body: Object.keys(sharedState.currentState.value.unitMap).some(
+			throw new Error(
+				Object.keys(sharedState.currentState.value.unitMap).some(
 					(unitId) =>
 						sharedState.currentState.value.unitMap[unitId].type ===
 						UnitType.Target
 				)
 					? 'Target units are not positioned from a parent unit'
-					: 'No target unit found',
-			});
-			return;
+					: 'No target unit found'
+			);
 		}
 		return editUnit(target);
 	};
@@ -381,9 +377,16 @@ export function useArtillery(options: ArtilleryOptions = {}) {
 		},
 		set(value: Vector) {
 			if (selectedFiringPair.value == null) return;
-			const artilleryPosition = getUnitResolvedVector(sharedState.currentState.value.unitMap, selectedFiringPair.value.artillery);
+			const artilleryPosition = getUnitResolvedVector(
+				sharedState.currentState.value.unitMap,
+				selectedFiringPair.value.artillery
+			);
 			const windOffset = getWindOffset(selectedFiringPair.value.artillery);
-			setUnitResolvedVector(sharedState.currentState.value.unitMap, selectedFiringPair.value.target, artilleryPosition.addVector(value).addVector(windOffset));
+			setUnitResolvedVector(
+				sharedState.currentState.value.unitMap,
+				selectedFiringPair.value.target,
+				artilleryPosition.addVector(value).addVector(windOffset)
+			);
 			options.onUnitUpdated?.(selectedFiringPair.value.target);
 		},
 	});
@@ -432,46 +435,40 @@ export function useArtillery(options: ArtilleryOptions = {}) {
 	) => {
 		assertCanEditWind();
 		const _windMultiplier = windMultiplier.value!;
-		try {
-			const unit = sharedState.currentState.value.unitMap[unitId];
-			if (unit == null) return;
-			if (unit.type !== UnitType.LandingZone) {
-				throw new Error('Only landing zones can update wind');
-			}
-			if (selectedFiringPair.value == null) {
-				throw new Error('No artillery found');
-			}
-
-			const artilleryPosition = getUnitResolvedVector(
-				sharedState.currentState.value.unitMap,
-				selectedFiringPair.value.artillery
-			);
-			const predictedLandingPosition = artilleryPosition
-				.addVector(firingSolution)
-				.addVector(getWindOffset(selectedFiringPair.value.artillery));
-			const actualLandingPosition = getUnitResolvedVector(
-				sharedState.currentState.value.unitMap,
-				unit.id
-			);
-
-			const windCorrection = predictedLandingPosition
-				.scale(-1)
-				.addVector(actualLandingPosition);
-
-			sharedState.currentState.value.wind = Vector.fromAngularVector(
-				sharedState.currentState.value.wind
-			).addVector(windCorrection.scale(1 / _windMultiplier)).angularVector;
-
-			if (removeUnitAfter) {
-				removeUnit(unitId);
-			}
-
-			options.onWindUpdated?.();
-		} catch (e) {
-			new Notification('FoxFall error', {
-				body: `Failed to update wind: ${e}`,
-			});
+		const unit = sharedState.currentState.value.unitMap[unitId];
+		if (unit == null) return;
+		if (unit.type !== UnitType.LandingZone) {
+			throw new Error('Only landing zones can update wind');
 		}
+		if (selectedFiringPair.value == null) {
+			throw new Error('No artillery found');
+		}
+
+		const artilleryPosition = getUnitResolvedVector(
+			sharedState.currentState.value.unitMap,
+			selectedFiringPair.value.artillery
+		);
+		const predictedLandingPosition = artilleryPosition
+			.addVector(firingSolution)
+			.addVector(getWindOffset(selectedFiringPair.value.artillery));
+		const actualLandingPosition = getUnitResolvedVector(
+			sharedState.currentState.value.unitMap,
+			unit.id
+		);
+
+		const windCorrection = predictedLandingPosition
+			.scale(-1)
+			.addVector(actualLandingPosition);
+
+		sharedState.currentState.value.wind = Vector.fromAngularVector(
+			sharedState.currentState.value.wind
+		).addVector(windCorrection.scale(1 / _windMultiplier)).angularVector;
+
+		if (removeUnitAfter) {
+			removeUnit(unitId);
+		}
+
+		options.onWindUpdated?.();
 	};
 
 	const resetWind = () => {
@@ -573,19 +570,21 @@ export function useArtillery(options: ArtilleryOptions = {}) {
 		}
 	});
 
-	window.electronApi?.onKeyboardShortcutPressed((command) => {
-		switch (command) {
-			case KeyboardCommand.CalibrateWind:
-				calibrateWind();
-				break;
-			case KeyboardCommand.EditTarget:
-				editTarget();
-				break;
-			case KeyboardCommand.OverrideFiringSolution:
-				overrideFiringSolution();
-				break;
-		}
-	});
+	window.electronApi?.onKeyboardShortcutPressed((command) =>
+		withHandlingAsync(async () => {
+			switch (command) {
+				case KeyboardCommand.CalibrateWind:
+					await calibrateWind();
+					break;
+				case KeyboardCommand.EditTarget:
+					await editTarget();
+					break;
+				case KeyboardCommand.OverrideFiringSolution:
+					overrideFiringSolution();
+					break;
+			}
+		})
+	);
 
 	const updateMouseActive = () => {
 		mouseActive.value = document.querySelector('.MouseCapture:hover') != null;
@@ -635,4 +634,4 @@ export function useArtillery(options: ArtilleryOptions = {}) {
 		viewport,
 		viewportControl,
 	};
-};
+}

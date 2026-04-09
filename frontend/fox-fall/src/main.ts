@@ -1,3 +1,4 @@
+import { addErrorHandler } from '@packages/frontend-libs/dist/error';
 import '@packages/frontend-libs/dist/frontend-libs.css';
 import Aura from '@primeuix/themes/aura';
 import { createApp } from 'vue';
@@ -6,6 +7,14 @@ import 'primeicons/primeicons.css';
 import PrimeVue from 'primevue/config';
 import './style.css';
 import App from '@/App.vue';
+
+addErrorHandler(async (error) => {
+	console.error(error);
+	debugger;
+	window.electronApi?.focusOverlay();
+	alert(`Error: ${error}`);
+	if (!await window.electronApi?.getOverlayOpen()) window.electronApi?.blurOverlay();
+});
 
 const pinia = createPinia();
 const app = createApp(App);

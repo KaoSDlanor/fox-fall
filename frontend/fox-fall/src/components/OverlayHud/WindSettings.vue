@@ -18,10 +18,12 @@
 					ref="directionInput"
 					:model-value="artillery.sharedState.currentState.value.wind.azimuth"
 					@update:model-value="
-						artillery.sharedState.produceUpdate(() => {
-							artillery.sharedState.currentState.value.wind.azimuth = $event;
-							syncedRoom.updateWind();
-						});
+						artillery.sharedState.produceUpdate(() =>
+							withHandling(() => {
+								artillery.sharedState.currentState.value.wind.azimuth = $event;
+								syncedRoom.updateWind();
+							})
+						);
 						syncedRoom.updateWind();
 					"
 					autofocus
@@ -33,10 +35,12 @@
 					ref="tierInput"
 					:model-value="artillery.sharedState.currentState.value.wind.distance"
 					@update:model-value="
-						artillery.sharedState.produceUpdate(() => {
-							artillery.sharedState.currentState.value.wind.distance = $event;
-							syncedRoom.updateWind();
-						})
+						artillery.sharedState.produceUpdate(() =>
+							withHandling(() => {
+								artillery.sharedState.currentState.value.wind.distance = $event;
+								syncedRoom.updateWind();
+							})
+						)
 					"
 				/>
 			</div>
@@ -51,11 +55,13 @@
 						windMultiplier
 					"
 					@update:model-value="
-						artillery.sharedState.produceUpdate(() => {
-							artillery.sharedState.currentState.value.wind.distance =
-								$event / windMultiplier!;
-							syncedRoom.updateWind();
-						})
+						artillery.sharedState.produceUpdate(() =>
+							withHandling(() => {
+								artillery.sharedState.currentState.value.wind.distance =
+									$event / windMultiplier!;
+								syncedRoom.updateWind();
+							})
+						)
 					"
 				/>
 			</div>
@@ -102,6 +108,7 @@
 <script setup lang="ts">
 	import PrimeButton from 'primevue/button';
 	import { computed, shallowRef } from 'vue';
+	import { withHandling } from '@packages/frontend-libs/dist/error';
 	import FoxDialog from '@packages/frontend-libs/dist/FoxDialog.vue';
 	import DirectionInput from '@packages/frontend-libs/dist/inputs/DirectionInput/DirectionInput.vue';
 	import DistanceInput from '@packages/frontend-libs/dist/inputs/DistanceInput.vue';

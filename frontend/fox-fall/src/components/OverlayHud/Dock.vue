@@ -8,7 +8,10 @@
 				:severity="item.severity"
 				:disabled="item.disabled"
 				@click.stop="
-					() => artillery.sharedState.produceUpdate(() => item.command())
+					() =>
+						artillery.sharedState.produceUpdate(() =>
+							withHandling(() => item.command())
+						)
 				"
 				@pointerenter="(event) => (tooltip = { label: item.label, event })"
 				@pointerleave="tooltip = null"
@@ -59,6 +62,7 @@
 </style>
 
 <script setup lang="ts">
+	import { withHandling } from '@packages/frontend-libs/dist/error';
 	import GridIcon from '@packages/frontend-libs/dist/icons/GridIcon.vue';
 	import Settings from '@/components/OverlayHud/Settings.vue';
 	import SyncSettings from '@/components/OverlayHud/SyncSettings.vue';

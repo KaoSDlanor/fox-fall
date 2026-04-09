@@ -40,12 +40,16 @@
 					}"
 					:model-value="artillery.selectedFiringVector.value?.distance ?? 0"
 					@update:model-value="
-						artillery.sharedState.produceUpdate(() => {
-							artillery.selectedFiringVector.value = Vector.fromAngularVector({
-								distance: $event,
-								azimuth: artillery.selectedFiringVector.value?.azimuth ?? 0,
-							});
-						})
+						artillery.sharedState.produceUpdate(() =>
+							withHandling(() => {
+								artillery.selectedFiringVector.value = Vector.fromAngularVector(
+									{
+										distance: $event,
+										azimuth: artillery.selectedFiringVector.value?.azimuth ?? 0,
+									}
+								);
+							})
+						)
 					"
 				/>
 			</div>
@@ -55,12 +59,17 @@
 					ref="azimuthInput"
 					:model-value="artillery.selectedFiringVector.value?.azimuth ?? 0"
 					@update:model-value="
-						artillery.sharedState.produceUpdate(() => {
-							artillery.selectedFiringVector.value = Vector.fromAngularVector({
-								distance: artillery.selectedFiringVector.value?.distance ?? 0,
-								azimuth: $event,
-							});
-						})
+						artillery.sharedState.produceUpdate(() =>
+							withHandling(() => {
+								artillery.selectedFiringVector.value = Vector.fromAngularVector(
+									{
+										distance:
+											artillery.selectedFiringVector.value?.distance ?? 0,
+										azimuth: $event,
+									}
+								);
+							})
+						)
 					"
 				/>
 			</div>
@@ -101,6 +110,7 @@
 <script setup lang="ts">
 	import { computed, shallowRef } from 'vue';
 	import { Vector } from '@packages/data/dist/artillery/vector';
+	import { withHandling } from '@packages/frontend-libs/dist/error';
 	import FoxDialog from '@packages/frontend-libs/dist/FoxDialog.vue';
 	import DirectionInput from '@packages/frontend-libs/dist/inputs/DirectionInput/DirectionInput.vue';
 	import DistanceInput from '@packages/frontend-libs/dist/inputs/DistanceInput.vue';

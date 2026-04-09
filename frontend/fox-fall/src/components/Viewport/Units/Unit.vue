@@ -26,7 +26,13 @@
 			<div class="Unit__label" v-if="unitLabel">
 				{{ unitLabel }}
 			</div>
-			<Component :is="getUnitIcon(artillery.sharedState.currentState.value.unitMap, unit.id)" ref="iconElement" class="Unit__icon" />
+			<Component
+				:is="
+					getUnitIcon(artillery.sharedState.currentState.value.unitMap, unit.id)
+				"
+				ref="iconElement"
+				class="Unit__icon"
+			/>
 		</div>
 	</PositionedElement>
 
@@ -51,7 +57,12 @@
 			<div class="Unit__label" v-if="unitLabel">
 				{{ unitLabel }}
 			</div>
-			<Component :is="getUnitIcon(artillery.sharedState.currentState.value.unitMap, unit.id)" class="Unit__icon" />
+			<Component
+				:is="
+					getUnitIcon(artillery.sharedState.currentState.value.unitMap, unit.id)
+				"
+				class="Unit__icon"
+			/>
 		</div>
 	</PositionedElement>
 </template>
@@ -135,6 +146,7 @@
 	import { computed, onScopeDispose, ref, shallowRef, watch } from 'vue';
 	import { UnitType } from '@packages/data/dist/artillery/unit';
 	import { Vector } from '@packages/data/dist/artillery/vector';
+	import { withHandling } from '@packages/frontend-libs/dist/error';
 	import type ArtilleryIcon from '@packages/frontend-libs/dist/icons/ArtilleryIcon.vue';
 	import PositionedElement from '@packages/frontend-libs/dist/viewport/PositionedElement.vue';
 	import { injectUnit } from '@/contexts/unit';
@@ -159,7 +171,10 @@
 		(event: 'remove'): void;
 		(event: 'set-unit-source', payload: string | undefined): void;
 		(event: 'updated'): void;
-		(event: 'update-wind', payload: { firingSolution: Vector, removeUnitAfter: boolean }): void;
+		(
+			event: 'update-wind',
+			payload: { firingSolution: Vector; removeUnitAfter: boolean }
+		): void;
 	}>();
 
 	const unit = injectUnit();
@@ -259,46 +274,50 @@
 		if (!movingData) return;
 
 		movingData.sharedStateId = artillery.sharedState.produceUpdate(
-			() => {
-				event.stopPropagation();
+			() =>
+				withHandling(() => {
+					event.stopPropagation();
 
-				const currentCursorViewport = artillery.viewport.value.toWorldPosition(
-					Vector.fromCartesianVector({
-						x: event.clientX,
-						y: event.clientY,
-					})
-				);
+					const currentCursorViewport =
+						artillery.viewport.value.toWorldPosition(
+							Vector.fromCartesianVector({
+								x: event.clientX,
+								y: event.clientY,
+							})
+						);
 
-				const currentVector = Vector.fromAngularVector(
-					artillery.sharedState.currentState.value.unitMap[unit.value.id].vector
-				);
-				currentVector.cartesianVector = {
-					x:
-						movingData.startUnitPosition.x +
-						currentCursorViewport.x -
-						movingData.startCursorViewport.x,
-					y:
-						movingData.startUnitPosition.y +
-						currentCursorViewport.y -
-						movingData.startCursorViewport.y,
-				};
-
-				// Round values
-				if (
-					artillery.sharedState.currentState.value.unitMap[unit.value.id]
-						.parentId != null
-				) {
-					currentVector.angularVector = {
-						distance: Number(currentVector.distance.toFixed(1)),
-						azimuth: Number(currentVector.azimuth.toFixed(1)),
+					const currentVector = Vector.fromAngularVector(
+						artillery.sharedState.currentState.value.unitMap[unit.value.id]
+							.vector
+					);
+					currentVector.cartesianVector = {
+						x:
+							movingData.startUnitPosition.x +
+							currentCursorViewport.x -
+							movingData.startCursorViewport.x,
+						y:
+							movingData.startUnitPosition.y +
+							currentCursorViewport.y -
+							movingData.startCursorViewport.y,
 					};
-				}
 
-				artillery.sharedState.currentState.value.unitMap[unit.value.id].vector =
-					currentVector.angularVector;
+					// Round values
+					if (
+						artillery.sharedState.currentState.value.unitMap[unit.value.id]
+							.parentId != null
+					) {
+						currentVector.angularVector = {
+							distance: Number(currentVector.distance.toFixed(1)),
+							azimuth: Number(currentVector.azimuth.toFixed(1)),
+						};
+					}
 
-				emit('updated');
-			},
+					artillery.sharedState.currentState.value.unitMap[
+						unit.value.id
+					].vector = currentVector.angularVector;
+
+					emit('updated');
+				}),
 			undefined,
 			movingData.sharedStateId === artillery.sharedState.lastUpdate
 				? movingData.sharedStateId

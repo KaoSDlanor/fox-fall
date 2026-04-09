@@ -21,8 +21,10 @@ export async function calibrateGrid(viewport: Viewport) {
 		'Calibrating grid. \n Drag from one corner of a cell to the other';
 
 	let resolve: () => void;
-	const promise = new Promise<void>((res) => {
+	let reject: (e: unknown) => void;
+	const promise = new Promise<void>((res, rej) => {
 		resolve = res;
+		reject = rej;
 	});
 
 	let draggingData: {
@@ -98,7 +100,13 @@ export async function calibrateGrid(viewport: Viewport) {
 		event.preventDefault();
 		event.stopPropagation();
 
-		if (draggingData.endPosition.addVector(draggingData.startPosition.scale(-1)).distance > 10) {
+		try {
+			if (
+				draggingData.endPosition.addVector(draggingData.startPosition.scale(-1))
+					.distance <= 10
+			) {
+				throw new Error('Grid size too small');
+			}
 
 			viewport.withSmoothing(() => {
 				viewport.resetRotation();
@@ -132,17 +140,15 @@ export async function calibrateGrid(viewport: Viewport) {
 					})
 				);
 			});
-		} else {
-			new Notification('FoxFall error', {
-				body: 'Grid size too small',
-			});
+			resolve();
+		} catch(e) {
+			reject(e);
+		} finally {
+			draggingData.indicator.remove();
+			draggingData = null;
+
+			calibrationPane.releasePointerCapture(event.pointerId);
 		}
-
-		draggingData.indicator.remove();
-		draggingData = null;
-
-		calibrationPane.releasePointerCapture(event.pointerId);
-		resolve();
 	});
 
 	document.body.appendChild(calibrationPane);
@@ -150,4 +156,4 @@ export async function calibrateGrid(viewport: Viewport) {
 	return promise.finally(() => {
 		calibrationPane.remove();
 	});
-};
+}

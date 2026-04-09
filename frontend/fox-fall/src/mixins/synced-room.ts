@@ -3,6 +3,7 @@ import { isRoomUpdate, type RoomUpdate, UpdateType } from '@packages/data';
 import { generateId } from '@packages/data/dist/id';
 import { type UnitMap, type Unit } from '@packages/data/dist/artillery/unit';
 import { Vector } from '@packages/data/dist/artillery/vector';
+	import { withHandling } from '@packages/frontend-libs/dist/error';
 import type { SharedObject } from '@packages/frontend-libs/dist/shared-object';
 import type { SharedState } from '@/lib/shared-state';
 
@@ -24,7 +25,7 @@ export function useSyncedRoom(
 	const isReady = ref(false);
 
 	const onMessage = (event: MessageEvent<any>) => {
-		sharedState.produceUpdate(() => {
+		sharedState.produceUpdate(() => withHandling(() => {
 			const roomUpdate = JSON.parse(event.data);
 			if (!isRoomUpdate(roomUpdate) || roomUpdate.eventFrom === myId) return;
 			if (roomUpdate.type === UpdateType.full) {
@@ -57,7 +58,7 @@ export function useSyncedRoom(
 			} else if (roomUpdate.type === UpdateType.wind) {
 				sharedState.currentState.value.wind = parseVector(roomUpdate.value).angularVector;
 			}
-		}, 'sync-system');
+		}), 'sync-system');
 	};
 
 	watch(
