@@ -57,10 +57,6 @@ export function useArtillery(options: ArtilleryOptions = {}) {
 	const pinnedUnits = useUnitSet();
 	const highlightedUnits = useUnitSet();
 	const draggingUnits = useUnitSet();
-	const overridingFiringSolution = ref<{
-		unitIdFrom: string;
-		unitIdTo: string;
-	} | null>(null);
 
 	const containerElement = options.containerElement ?? ref(null);
 	const viewport = ref(
@@ -392,57 +388,20 @@ export function useArtillery(options: ArtilleryOptions = {}) {
 		},
 	});
 
-	const overrideFiringSolution = async () => {
-		const artilleryUnit = primaryUnitsByType.value[UnitType.Artillery];
-		const targetUnit = primaryUnitsByType.value[UnitType.Target];
-		if (artilleryUnit == null) {
-			new Notification('FoxFall error', {
-				body: 'No artillery unit found',
-			});
-			return;
-		}
-		if (targetUnit == null) {
-			new Notification('FoxFall error', {
-				body: 'No target unit found',
-			});
-			return;
+	const overrideFiringSolution = () => {
+		if (selectedFiringPair.value == null) {
+			throw new Error('No firing pair found');
 		}
 
-		const specs = getUnitSpecs(
-			sharedState.currentState.value.unitMap,
-			artilleryUnit.id
-		);
-		if (specs == null) {
-			new Notification('FoxFall error', {
-				body: 'Artillery type not selected',
-			});
-			return;
+		const firingSolutionInput = document.querySelector(
+			'.FiringSolution__information__item input'
+		) as HTMLInputElement | null;
+
+		if (firingSolutionInput == null) {
+			throw new Error('Failed to find firing solution input');
 		}
-
-		const overlayWasOpen = overlayOpen.value;
-
-		overridingFiringSolution.value = {
-			unitIdFrom: artilleryUnit.id,
-			unitIdTo: targetUnit.id,
-		};
-		if (!overlayWasOpen) {
-			window.electronApi?.toggleOverlay();
-		}
-
-		overlayOpen.value = true;
-		currentScope.run(() => {
-			until(
-				computed(
-					() => overridingFiringSolution.value == null || !overlayOpen.value
-				)
-			)
-				.toBe(true)
-				.then(() => {
-					if (!overlayWasOpen && overlayOpen.value) {
-						window.electronApi?.toggleOverlay();
-					}
-				});
-		});
+		firingSolutionInput.select();
+		window.electronApi?.focusOverlay();
 	};
 
 	const windMultiplier = computed(() => {
@@ -672,7 +631,6 @@ export function useArtillery(options: ArtilleryOptions = {}) {
 		draggingUnits,
 		selectedFiringPair,
 		selectedFiringVector,
-		overridingFiringSolution,
 		containerElement,
 		viewport,
 		viewportControl,

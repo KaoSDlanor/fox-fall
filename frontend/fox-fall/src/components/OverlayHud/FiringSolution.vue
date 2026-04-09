@@ -4,7 +4,7 @@
 		:default-position-override="{ top: 0, left: 50, centerX: true }"
 		:disable-close="true"
 		:visible="pinned || artillery.overlayOpen.value"
-		:pinned="pinned"
+		v-model:pinned="pinned"
 		class="FiringSolution__dialog"
 	>
 		<template #header>
@@ -29,6 +29,7 @@
 			<div class="FiringSolution__information__item">
 				<label>Distance:</label>
 				<DistanceInput
+					ref="distanceInput"
 					:class="{
 						'FiringSolution__distance--invalid':
 							specs != null &&
@@ -51,6 +52,7 @@
 			<div class="FiringSolution__information__item">
 				<label>Azimuth:</label>
 				<DirectionInput
+					ref="azimuthInput"
 					:model-value="artillery.selectedFiringVector.value?.azimuth ?? 0"
 					@update:model-value="
 						artillery.sharedState.produceUpdate(() => {
@@ -98,12 +100,16 @@
 
 <script setup lang="ts">
 	import { computed, shallowRef } from 'vue';
+	import { Vector } from '@packages/data/dist/artillery/vector';
 	import FoxDialog from '@packages/frontend-libs/dist/FoxDialog.vue';
 	import DirectionInput from '@packages/frontend-libs/dist/inputs/DirectionInput/DirectionInput.vue';
 	import DistanceInput from '@packages/frontend-libs/dist/inputs/DistanceInput.vue';
 	import { artillery } from '@/lib/globals';
 	import { getUnitLabel, getUnitSpecs } from '@/lib/unit';
-	import { Vector } from '@packages/data/dist/artillery/vector';
+	import { useFieldGroup } from '@/mixins/form';
+
+	const distanceInput = shallowRef<InstanceType<typeof DistanceInput>>(null!);
+	const azimuthInput = shallowRef<InstanceType<typeof DirectionInput>>(null!);
 
 	const pinned = shallowRef(true);
 
@@ -114,5 +120,12 @@
 			artillery.sharedState.currentState.value.unitMap,
 			artilleryId
 		);
+	});
+
+	useFieldGroup({
+		inputs: computed(() => [distanceInput.value, azimuthInput.value]),
+		onLastSubmit() {
+			artillery.checkWindowFocus();
+		},
 	});
 </script>

@@ -74,16 +74,6 @@
 			:is-base-unit="true"
 		/>
 
-		<FiringSolutionOverride
-			v-if="artillery.overridingFiringSolution.value != null"
-			:visible="true"
-			@update:visible="
-				!$event && (artillery.overridingFiringSolution.value = null)
-			"
-			:unit-id-from="artillery.overridingFiringSolution.value?.unitIdFrom"
-			:unit-id-to="artillery.overridingFiringSolution.value?.unitIdTo"
-		/>
-
 		<WindSettings />
 		<FiringSolution />
 
@@ -166,7 +156,6 @@
 	import ZoomIcon from '@packages/frontend-libs/dist/icons/ZoomIcon.vue';
 	import Dock from '@/components/OverlayHud/Dock.vue';
 	import FiringSolution from '@/components/OverlayHud/FiringSolution.vue';
-	import FiringSolutionOverride from '@/components/OverlayHud/FiringSolutionOverride.vue';
 	import UnitSettings from '@/components/OverlayHud/UnitSettings.vue';
 	import WindSettings from '@/components/OverlayHud/WindSettings.vue';
 	import { LAYER } from '@/lib/constants/ui';
