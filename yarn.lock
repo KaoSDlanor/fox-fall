@@ -5669,6 +5669,7 @@ __metadata:
     "@dotenvx/dotenvx": "npm:^0.44.1"
     "@yarnpkg/types": "npm:^4.0.0"
     turbo: "npm:^2.0.12"
+    typescript: "npm:^5.4.5"
   languageName: unknown
   linkType: soft
 
