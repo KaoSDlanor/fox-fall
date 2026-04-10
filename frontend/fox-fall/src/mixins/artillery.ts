@@ -346,7 +346,7 @@ export function useArtillery(options: ArtilleryOptions = {}) {
 						sharedState.currentState.value.unitMap[unitId].type ===
 						UnitType.Target
 				)
-					? 'Target units are not positioned from a parent unit'
+					? 'No target units are sighted from another unit'
 					: 'No target unit found'
 			);
 		}
@@ -565,7 +565,6 @@ export function useArtillery(options: ArtilleryOptions = {}) {
 			event.preventDefault();
 			sharedState.redo();
 		} else if (event.key === 'Escape' && !overlayOpen.value) {
-			event.preventDefault();
 			checkWindowFocus();
 		}
 	});

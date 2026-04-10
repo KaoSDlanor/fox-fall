@@ -36,7 +36,7 @@
 						class="FoxDialog__header-action"
 						:severity="pinned ? 'success' : 'secondary'"
 						@pointerdown="pinned = !pinned"
-						:title="pinned ? 'Unpin' : 'Pin'"
+						:title="pinned ? 'Unpin' : 'Pin (show while overlay is closed)'"
 					>
 						<i class="pi pi-thumbtack" />
 					</PrimeButton>
@@ -46,7 +46,7 @@
 						class="FoxDialog__header-action"
 						severity="secondary"
 						@pointerdown.prevent="!moveMode && (rolledUp = !rolledUp)"
-						:title="rolledUp ? 'Roll down' : 'Roll up'"
+						:title="rolledUp ? 'Roll down' : 'Roll up (only show the title bar, hide the content)'"
 					>
 						<i
 							class="pi"
@@ -437,13 +437,12 @@
 
 	const onKeyDown = (event: KeyboardEvent) => {
 		if (event.key === "Escape") {
+			(
+				containerElement.value!.querySelector(":focus") as HTMLElement
+			)?.blur();
+			emit("dialog-blur");
 			if (!pinned.value && !props.disableClose) {
 				visible.value = false;
-			} else {
-				(
-					containerElement.value!.querySelector(":focus") as HTMLElement
-				)?.blur();
-				emit("dialog-blur");
 			}
 		}
 	};

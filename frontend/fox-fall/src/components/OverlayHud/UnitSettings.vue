@@ -10,7 +10,9 @@
 		"
 		v-model:position-override="positionOverride"
 		:disable-close="props.isBaseUnit && !props.unitId"
+		:disable-pin="props.isBaseUnit"
 		:persist-position-id="props.persistPositionId"
+		:disable-roll-up="props.isBaseUnit"
 		:aria-unit-id="props.unitId"
 		:aria-unit-type="unit?.type"
 	>
@@ -31,7 +33,7 @@
 		</template>
 		<template #header-actions>
 			<PrimeButton
-				v-if="!props.isBaseUnit"
+				v-if="!props.isBaseUnit && unit?.parentId != null"
 				class="FoxDialog__header-action"
 				severity="secondary"
 				@pointerdown.stop="hideDetails = !hideDetails"
@@ -56,7 +58,7 @@
 			</PrimeButton>
 		</template>
 		<div class="UnitSettings__container">
-			<template v-if="unit != null && !separatedUnits.has(unit.id)">
+			<template v-if="unit != null && !isSupercededBySeparatedWindow">
 				<div class="UnitSettings__table">
 					<template v-if="hideDetails">
 						<div class="UnitSettings__row">
@@ -237,11 +239,57 @@
 							/>
 						</div>
 						<template v-if="parent">
-							<div class="UnitSettings__row">
-								<span class="UnitSettings__span">
-									{{ parentLabel }} -> {{ unitLabel }}
-								</span>
-							</div>
+							<Tabs
+								class="UnitSettings__span"
+								v-model:value="spottingDirection"
+							>
+								<TabList>
+									<Tab as="div" :value="1">
+										<Component
+											:is="
+												getUnitIcon(
+													artillery.sharedState.currentState.value.unitMap,
+													parent.id
+												)
+											"
+											class="UnitSettings__icon"
+										/>
+										{{ parentLabel }} ->
+										<Component
+											:is="
+												getUnitIcon(
+													artillery.sharedState.currentState.value.unitMap,
+													unit.id
+												)
+											"
+											class="UnitSettings__icon"
+										/>
+										{{ unitLabel }}
+									</Tab>
+									<Tab as="div" :value="-1">
+										<Component
+											:is="
+												getUnitIcon(
+													artillery.sharedState.currentState.value.unitMap,
+													unit.id
+												)
+											"
+											class="UnitSettings__icon"
+										/>
+										{{ unitLabel }} ->
+										<Component
+											:is="
+												getUnitIcon(
+													artillery.sharedState.currentState.value.unitMap,
+													parent.id
+												)
+											"
+											class="UnitSettings__icon"
+										/>
+										{{ parentLabel }}
+									</Tab>
+								</TabList>
+							</Tabs>
 							<div class="UnitSettings__row">
 								<span>Distance:</span>
 								<DistanceInput
@@ -264,106 +312,39 @@
 								<span>Azimuth:</span>
 								<DirectionInput
 									ref="azimuthInput"
-									:model-value="wrapDegrees(unit.vector.azimuth)"
+									:model-value="
+										wrapDegrees(
+											unit.vector.azimuth + (spottingDirection < 0 ? 180 : 0)
+										)
+									"
 									@update:model-value="
 										artillery.sharedState.produceUpdate(() =>
 											withHandling(() => {
 												artillery.sharedState.currentState.value.unitMap[
 													unit!.id
-												].vector.azimuth = wrapDegrees($event);
+												].vector.azimuth = wrapDegrees(
+													$event - (spottingDirection < 0 ? 180 : 0)
+												);
 												syncedRoom.updateUnit(unit!.id);
 											})
 										)
 									"
 								/>
 							</div>
-							<template v-if="unit.type !== UnitType.LandingZone">
-								<span class="UnitSettings__span">
-									{{ unitLabel }} -> {{ parentLabel }}
-								</span>
-								<div class="UnitSettings__row">
-									<span>Distance:</span>
-									<DistanceInput
-										:model-value="unit.vector.distance"
-										@update:model-value="
-											artillery.sharedState.produceUpdate(() =>
-												withHandling(() => {
-													unit!.vector = Object.assign(
-														Vector.fromAngularVector(unit!.vector),
-														{ distance: $event }
-													).angularVector;
-													syncedRoom.updateUnit(unit!.id);
-												})
-											)
-										"
-									/>
-								</div>
-								<div class="UnitSettings__row">
-									<span>Azimuth:</span>
-									<DirectionInput
-										:model-value="wrapDegrees(unit.vector.azimuth + 180)"
-										@update:model-value="
-											artillery.sharedState.produceUpdate(() =>
-												withHandling(() => {
-													unit!.vector = Object.assign(
-														Vector.fromAngularVector(unit!.vector),
-														{ azimuth: wrapDegrees($event - 180) }
-													).angularVector;
-													syncedRoom.updateUnit(unit!.id);
-												})
-											)
-										"
-									/>
-								</div>
-								<template v-if="settings.showXYOffsets">
-									<div class="UnitSettings__row">
-										<span>X:</span>
-										<DistanceInput
-											:model-value="-Vector.fromAngularVector(unit.vector).x"
-											@update:model-value="
-												artillery.sharedState.produceUpdate(() =>
-													withHandling(() => {
-														unit!.vector = Object.assign(
-															Vector.fromAngularVector(unit!.vector),
-															{ x: -$event }
-														).angularVector;
-														syncedRoom.updateUnit(unit!.id);
-													})
-												)
-											"
-										/>
-									</div>
-									<div class="UnitSettings__row">
-										<span>Y:</span>
-										<DistanceInput
-											:model-value="-Vector.fromAngularVector(unit.vector).y"
-											@update:model-value="
-												artillery.sharedState.produceUpdate(() =>
-													withHandling(() => {
-														unit!.vector = Object.assign(
-															Vector.fromAngularVector(unit!.vector),
-															{ y: -$event }
-														).angularVector;
-														syncedRoom.updateUnit(unit!.id);
-													})
-												)
-											"
-										/>
-									</div>
-								</template>
-							</template>
 						</template>
-						<template v-if="settings.showXYOffsets || !parent">
+						<template v-if="settings.showXYOffsets">
 							<div class="UnitSettings__row">
 								<span>X:</span>
 								<DistanceInput
-									:model-value="Vector.fromAngularVector(unit.vector).x"
+									:model-value="
+										Vector.fromAngularVector(unit.vector).x * spottingDirection
+									"
 									@update:model-value="
 										artillery.sharedState.produceUpdate(() =>
 											withHandling(() => {
 												unit!.vector = Object.assign(
 													Vector.fromAngularVector(unit!.vector),
-													{ x: $event }
+													{ x: $event * spottingDirection }
 												).angularVector;
 												syncedRoom.updateUnit(unit!.id);
 											})
@@ -374,42 +355,19 @@
 							<div class="UnitSettings__row">
 								<span>Y:</span>
 								<DistanceInput
-									:model-value="Vector.fromAngularVector(unit.vector).y"
+									:model-value="
+										Vector.fromAngularVector(unit.vector).y * spottingDirection
+									"
 									@update:model-value="
 										artillery.sharedState.produceUpdate(() =>
 											withHandling(() => {
 												unit!.vector = Object.assign(
 													Vector.fromAngularVector(unit!.vector),
-													{ y: $event }
+													{ y: $event * spottingDirection }
 												).angularVector;
 												syncedRoom.updateUnit(unit!.id);
 											})
 										)
-									"
-								/>
-							</div>
-						</template>
-						<template v-if="unit.type === UnitType.LandingZone">
-							<div class="UnitSettings__row">
-								<span class="UnitSettings__span">Gun measurement:</span>
-							</div>
-							<div class="UnitSettings__row">
-								<span>Distance:</span>
-								<DistanceInput
-									ref="landingZoneFiringSolutionDistanceInput"
-									:model-value="langingZoneFiringSolution.distance"
-									@update:model-value="
-										langingZoneFiringSolution.distance = $event
-									"
-								/>
-							</div>
-							<div class="UnitSettings__row">
-								<span>Azimuth:</span>
-								<DirectionInput
-									ref="landingZoneFiringSolutionAzimuthInput"
-									:model-value="wrapDegrees(langingZoneFiringSolution.azimuth)"
-									@update:model-value="
-										langingZoneFiringSolution.azimuth = wrapDegrees($event)
 									"
 								/>
 							</div>
@@ -505,20 +463,6 @@
 			<template v-else> No unit selected </template>
 		</div>
 	</FoxDialog>
-
-	<template v-for="unitId in separatedUnits" :key="unitId">
-		<UnitSettings
-			v-if="artillery.sharedState.currentState.value.unitMap[unitId] != null"
-			:unit-id="unitId"
-			:default-position-override="positionOverride"
-			@update:visible="
-				!$event &&
-					separatedUnits.delete(unitId) &&
-					artillery.selectedUnit.value === unitId &&
-					(artillery.selectedUnit.value = null)
-			"
-		/>
-	</template>
 </template>
 
 <style lang="scss">
@@ -605,6 +549,11 @@
 				color: inherit;
 				font-size: inherit;
 
+				&.UnitSettings__action-inverted {
+					background: white;
+					color: black;
+				}
+
 				.Unit__icon {
 					width: 1em;
 					height: 1em;
@@ -618,6 +567,9 @@
 
 <script setup lang="ts">
 	import PrimeButton from 'primevue/button';
+	import Tab from 'primevue/tab';
+	import Tabs from 'primevue/tabs';
+	import TabList from 'primevue/tablist';
 	import { computed, markRaw, ref, shallowRef, watch } from 'vue';
 	import { wrapDegrees } from '@packages/data/dist/artillery/angle';
 	import {
@@ -641,10 +593,10 @@
 	import FoxSelect from '@packages/frontend-libs/dist/inputs/FoxSelect.vue';
 	import FoxText from '@packages/frontend-libs/dist/inputs/FoxText.vue';
 	import { ICONS } from '@packages/frontend-libs/dist/icons';
-	import { useScopePerSetEntry } from '@packages/frontend-libs/dist/scope';
 	import AmmoSelect from '@/components/inputs/AmmoSelect.vue';
 	import PlatformSelect from '@/components/inputs/PlatformSelect.vue';
 	import SelectOneUnit from '@/components/inputs/select-unit/SelectOneUnit.vue';
+	import { injectUnitSettingsOpen } from '@/contexts/unit-settings-open';
 	import { UNIT_ICON_BY_TYPE } from '@/lib/constants/unit';
 	import { artillery, syncedRoom } from '@/lib/globals';
 	import { settings, UserMode } from '@/lib/settings';
@@ -673,6 +625,15 @@
 		Vector.fromCartesianVector({ x: 0, y: 0 })
 	);
 	const positionOverride = ref<PositionOverride | undefined>(undefined);
+	const spottingDirection = ref(1);
+
+	const separatedUnits = injectUnitSettingsOpen();
+	const isSupercededBySeparatedWindow = computed(
+		() =>
+			props.isBaseUnit &&
+			unit.value != null &&
+			separatedUnits.value.has(unit.value.id)
+	);
 
 	const props = defineProps<{
 		unitId?: string;
@@ -780,9 +741,9 @@
 	);
 
 	watch(
-		() => pinned.value,
-		(value) => {
-			if (!value) {
+		() => unit.value?.parentId,
+		(parentId) => {
+			if (parentId == null) {
 				hideDetails.value = false;
 			}
 		}
@@ -812,25 +773,4 @@
 			artillery.checkWindowFocus();
 		},
 	});
-
-	const separatedUnits = ref<Set<string>>(new Set());
-
-	useScopePerSetEntry(
-		separatedUnits,
-		(unitId) => {
-			watch(
-				() => artillery.sharedState.currentState.value.unitMap[unitId],
-				(unit) => {
-					if (unit == null) {
-						separatedUnits.value.delete(unitId);
-					}
-				},
-				{
-					immediate: true,
-					flush: 'sync',
-				}
-			);
-		},
-		'sync'
-	);
 </script>

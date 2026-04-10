@@ -74,6 +74,25 @@
 			:is-base-unit="true"
 		/>
 
+		<UnitSettings
+			v-for="unitId in separatedUnits"
+			:key="unitId"
+			:unit-id="unitId"
+			:default-position-override="{
+				top: 50,
+				left: 50,
+				centerX: true,
+				centerY: true,
+			}"
+			:visible="true"
+			@update:visible="
+				!$event &&
+					separatedUnits.delete(unitId) &&
+					artillery.selectedUnit.value === unitId &&
+					(artillery.selectedUnit.value = null)
+			"
+		/>
+
 		<WindSettings />
 		<FiringSolution />
 
@@ -148,12 +167,13 @@
 <script setup lang="ts">
 	import PrimeButton from 'primevue/button';
 	import vPrimeTooltip from 'primevue/tooltip';
-	import { computed } from 'vue';
+	import { computed, ref, watch } from 'vue';
 	import { wrapDegrees } from '@packages/data/dist/artillery/angle';
 	import CompassIcon from '@packages/frontend-libs/dist/icons/CompassIcon.vue';
 	import DragIcon from '@packages/frontend-libs/dist/icons/DragIcon.vue';
 	// import RotateIcon from '@packages/frontend-libs/dist/icons/RotateIcon.vue';
 	import ZoomIcon from '@packages/frontend-libs/dist/icons/ZoomIcon.vue';
+	import { useScopePerSetEntry } from '@packages/frontend-libs/dist/scope';
 	import Dock from '@/components/OverlayHud/Dock.vue';
 	import FiringSolution from '@/components/OverlayHud/FiringSolution.vue';
 	import UnitSettings from '@/components/OverlayHud/UnitSettings.vue';
@@ -161,6 +181,7 @@
 	import { LAYER } from '@/lib/constants/ui';
 	import { artillery } from '@/lib/globals';
 	import { settings } from '@/lib/settings';
+import { provideUnitSettingsOpen } from '@/contexts/unit-settings-open';
 
 	const resolvedCursor = computed(() => {
 		return artillery.viewport.value.toWorldPosition(artillery.cursor.value);
@@ -177,4 +198,26 @@
 			artillery.resetViewport();
 		});
 	};
+
+	const separatedUnits = ref<Set<string>>(new Set());
+	provideUnitSettingsOpen(separatedUnits);
+
+	useScopePerSetEntry(
+		separatedUnits,
+		(unitId) => {
+			watch(
+				() => artillery.sharedState.currentState.value.unitMap[unitId],
+				(unit) => {
+					if (unit == null) {
+						separatedUnits.value.delete(unitId);
+					}
+				},
+				{
+					immediate: true,
+					flush: 'sync',
+				}
+			);
+		},
+		'sync'
+	);
 </script>

@@ -1,7 +1,7 @@
 <template>
 	<FoxSelect
 		ref="selectElement"
-		class="UnitSettings__select"
+		class="PlatformSelect__select"
 		enable-search
 		enable-clear
 		v-model="modelValue"
