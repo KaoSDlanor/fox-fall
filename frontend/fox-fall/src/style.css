@@ -47,6 +47,7 @@ button:focus-visible {
 }
 
 .icon {
+	color: white;
 	width: 1em;
 	height: 1em;
 	vertical-align: middle;

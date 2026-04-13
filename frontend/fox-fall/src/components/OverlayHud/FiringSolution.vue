@@ -7,8 +7,17 @@
 		v-model:pinned="pinned"
 		class="FiringSolution__dialog"
 	>
-		<template #header>
-			<span v-if="artillery.selectedFiringPair.value">
+		<template #header> Firing Solution: </template>
+		<div class="FiringSolution__information">
+			<div class="FiringSolution__information__span" v-if="artillery.selectedFiringPair.value">
+				<Component
+					:is="
+						getUnitIcon(
+							artillery.sharedState.currentState.value.unitMap,
+							artillery.selectedFiringPair.value.artillery
+						)
+					"
+				/>
 				{{
 					getUnitLabel(
 						artillery.sharedState.currentState.value.unitMap,
@@ -16,16 +25,21 @@
 					)
 				}}
 				->
+				<Component
+					:is="
+						getUnitIcon(
+							artillery.sharedState.currentState.value.unitMap,
+							artillery.selectedFiringPair.value.target
+						)
+					"
+				/>
 				{{
 					getUnitLabel(
 						artillery.sharedState.currentState.value.unitMap,
 						artillery.selectedFiringPair.value.target
 					)
 				}}
-			</span>
-			<span v-else>Firing Solution</span>
-		</template>
-		<div class="FiringSolution__information">
+			</div>
 			<div class="FiringSolution__information__item">
 				<label>Distance:</label>
 				<DistanceInput
@@ -98,6 +112,10 @@
 		align-items: inherit;
 	}
 
+	.FiringSolution__information__span {
+		grid-column: auto / span 2;
+	}
+
 	.FiringSolution__information__item__angle-input {
 		margin: 0 !important;
 	}
@@ -115,7 +133,7 @@
 	import DirectionInput from '@packages/frontend-libs/dist/inputs/DirectionInput/DirectionInput.vue';
 	import DistanceInput from '@packages/frontend-libs/dist/inputs/DistanceInput.vue';
 	import { artillery } from '@/lib/globals';
-	import { getUnitLabel, getUnitSpecs } from '@/lib/unit';
+	import { getUnitIcon, getUnitLabel, getUnitSpecs } from '@/lib/unit';
 	import { useFieldGroup } from '@/mixins/form';
 
 	const distanceInput = shallowRef<InstanceType<typeof DistanceInput>>(null!);
