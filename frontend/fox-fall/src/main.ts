@@ -1,5 +1,6 @@
 import { addErrorHandler } from '@packages/frontend-libs/dist/error';
 import '@packages/frontend-libs/dist/frontend-libs.css';
+import { fixRounding } from '@packages/polyfills';
 import Aura from '@primeuix/themes/aura';
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
@@ -7,6 +8,8 @@ import 'primeicons/primeicons.css';
 import PrimeVue from 'primevue/config';
 import './style.css';
 import App from '@/App.vue';
+
+fixRounding();
 
 addErrorHandler(async (error) => {
 	console.error(error);

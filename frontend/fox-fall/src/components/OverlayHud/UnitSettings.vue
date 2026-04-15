@@ -695,7 +695,7 @@
 	};
 
 	watch(
-		artillery.selectedFiringVector,
+		artillery.selectedFiringVectorWithRounding,
 		(value) => {
 			if (value == null) return;
 			langingZoneFiringSolution.value = value.clone();

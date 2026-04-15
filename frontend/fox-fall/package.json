@@ -14,6 +14,7 @@
     "@kaosdlanor/vue-reactivity": "^1.0.2",
     "@packages/data": "workspace:*",
     "@packages/frontend-libs": "workspace:*",
+    "@packages/polyfills": "workspace:*",
     "@primeuix/themes": "^1.0.0",
     "@vueuse/core": "^12.2.0",
     "pinia": "^2.3.1",

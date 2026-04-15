@@ -41,6 +41,21 @@
 				}}
 			</div>
 			<div class="FiringSolution__information__item">
+				<label>Rounded Distance:</label>
+				<DistanceInput
+					:class="{
+						'FiringSolution__distance--invalid':
+							specs != null &&
+							(specs.MAX_RANGE <
+								(artillery.selectedFiringVectorWithRounding.value?.distance ?? 0) ||
+								specs.MIN_RANGE >
+									(artillery.selectedFiringVectorWithRounding.value?.distance ?? 0)),
+					}"
+					disabled
+					:model-value="artillery.selectedFiringVectorWithRounding.value?.distance ?? 0"
+				/>
+			</div>
+			<div class="FiringSolution__information__item">
 				<label>Distance:</label>
 				<DistanceInput
 					ref="distanceInput"

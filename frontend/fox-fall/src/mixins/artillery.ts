@@ -391,13 +391,29 @@ export function useArtillery(options: ArtilleryOptions = {}) {
 		},
 	});
 
+	const selectedFiringVectorWithRounding = computed({
+		get() {
+			if (selectedFiringPair.value == null || selectedFiringVector.value == null) return;
+			const specs = getUnitSpecs(sharedState.currentState.value.unitMap, selectedFiringPair.value.artillery);
+			if (specs == null || !specs.RANGE_INCREMENT) return selectedFiringVector.value;
+
+			return Vector.fromAngularVector({
+				azimuth: selectedFiringVector.value.azimuth,
+				distance: Math.round((selectedFiringVector.value.distance - specs.MIN_RANGE) / specs.RANGE_INCREMENT) * specs.RANGE_INCREMENT + specs.MIN_RANGE,
+			});
+		},
+		set(value: Vector) {
+			selectedFiringVector.value = value;
+		},
+	});
+
 	const overrideFiringSolution = () => {
 		if (selectedFiringPair.value == null) {
 			throw new Error('No firing pair found');
 		}
 
 		const firingSolutionInput = document.querySelector(
-			'.FiringSolution__information__item input'
+			'.FiringSolution__information__item input:not(:disabled)'
 		) as HTMLInputElement | null;
 
 		if (firingSolutionInput == null) {
@@ -629,6 +645,7 @@ export function useArtillery(options: ArtilleryOptions = {}) {
 		draggingUnits,
 		selectedFiringPair,
 		selectedFiringVector,
+		selectedFiringVectorWithRounding,
 		containerElement,
 		viewport,
 		viewportControl,

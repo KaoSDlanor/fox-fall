@@ -917,6 +917,7 @@ __metadata:
     "@kaosdlanor/vue-reactivity": "npm:^1.0.2"
     "@packages/data": "workspace:*"
     "@packages/frontend-libs": "workspace:*"
+    "@packages/polyfills": "workspace:*"
     "@primeuix/themes": "npm:^1.0.0"
     "@types/node": "npm:^22.7.4"
     "@types/w3c-image-capture": "npm:^1.0.10"
@@ -1590,6 +1591,16 @@ __metadata:
     rimraf: "npm:^6.0.1"
     typescript: "npm:^5.2.2"
     uiohook-napi: "npm:^1.5.4"
+  languageName: unknown
+  linkType: soft
+
+"@packages/polyfills@workspace:*, @packages/polyfills@workspace:packages/polyfills":
+  version: 0.0.0-use.local
+  resolution: "@packages/polyfills@workspace:packages/polyfills"
+  dependencies:
+    prettier: "npm:^3.0.3"
+    rimraf: "npm:^6.0.1"
+    typescript: "npm:^5.2.2"
   languageName: unknown
   linkType: soft
 

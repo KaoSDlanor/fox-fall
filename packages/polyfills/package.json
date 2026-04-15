@@ -1,0 +1,20 @@
+{
+  "name": "@packages/polyfills",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rimraf dist && tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "private": true,
+  "repository": "https://github.com/KaoSDlanor/fox-fall",
+  "author": "KaoSDlanor <KaoSDlanor@gmail.com>",
+  "devDependencies": {
+    "prettier": "^3.0.3",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.2.2"
+  },
+  "license": "MIT"
+}
