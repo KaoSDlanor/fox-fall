@@ -59,7 +59,7 @@ import MapIconSoulFactory from './MapIconSoulFactory.png?no-inline';
 // import MapIconStaticBase2 from './MapIconStaticBase2.png?no-inline';
 // import MapIconStaticBase3 from './MapIconStaticBase3.png?no-inline';
 import MapIconStorageFacility from './MapIconStorageFacility.png?no-inline';
-import MapIconStormCannon from './MapIconStormCannon.png?no-inline';
+import MapIconStormCannon from './MapIconStormcannon.png?no-inline';
 import MapIconsTrainingGround from './MapIconsTrainingGround.png?no-inline';
 import MapIconSulfur from './MapIconSulfur.png?no-inline';
 import MapIconSulfurMine from './MapIconSulfurMine.png?no-inline';
