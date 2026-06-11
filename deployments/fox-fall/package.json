@@ -1,6 +1,6 @@
 {
   "name": "fox-fall",
-  "version": "2.5.4",
+  "version": "2.5.5",
   "main": "dist/index.js",
   "description": "Foxhole artillery overlay",
   "author": "Daniel Olivier <KaoSDlanor@gmail.com>",
