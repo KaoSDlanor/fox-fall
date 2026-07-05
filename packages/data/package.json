@@ -4,7 +4,7 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest",
     "build": "rimraf dist && tsc",
     "prepublishOnly": "npm run build"
   },
@@ -18,7 +18,8 @@
   "devDependencies": {
     "prettier": "^3.0.3",
     "rimraf": "^6.0.1",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "vitest": "^4.1.9"
   },
   "license": "MIT"
 }

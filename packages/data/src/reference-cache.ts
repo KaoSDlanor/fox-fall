@@ -1,5 +1,4 @@
-
-import EventEmitter from 'node:events';
+import EventEmitter from "node:events";
 
 export class ReferenceCache<T> extends EventEmitter<{
 	delete: [key: string, value: T];
@@ -32,28 +31,49 @@ export class ReferenceCache<T> extends EventEmitter<{
 		}
 		entry.refCount--;
 		if (entry.refCount === 0) {
-			this.emit('delete', key, this.cache.get(key)!.value);
+			this.emit("delete", key, this.cache.get(key)!.value);
 			this.cache.delete(key);
 		}
 	}
+
+	useReference(key: string, factory: () => T) {
+		const value = this.addReference(key, factory);
+
+		const self = this;
+		let released = false;
+		function releaseReference() {
+			if (released) return;
+			released = true;
+			self.removeReference(key);
+		}
+
+		return {
+			value,
+			stop: releaseReference,
+		};
+	}
 }
 
-export function wrapFunction<F extends (...args: any[]) => { stop: () => void }>(
-	basicFunction: F,
-	getKey: (...args: Parameters<F>) => string
-): F {
+export function wrapFunction<
+	F extends (...args: any[]) => { stop: () => void },
+>(basicFunction: F, getKey: (...args: Parameters<F>) => string): F {
 	const nativeStopFunctions = new WeakMap<ReturnType<F>, () => void>();
 	const cache = new ReferenceCache<ReturnType<F>>();
 
-	cache.on('delete', (_key, value) => {
+	cache.on("delete", (_key, value) => {
 		nativeStopFunctions.get(value)?.();
 	});
 
-
-	function wrappedFunction(this: ThisParameterType<F>,...args: Parameters<F>): ReturnType<F> {
+	function wrappedFunction(
+		this: ThisParameterType<F>,
+		...args: Parameters<F>
+	): ReturnType<F> {
 		const key = getKey(...args);
 
-		const output = cache.addReference(key, () => basicFunction.call(this, ...args) as ReturnType<F>);
+		const output = cache.addReference(
+			key,
+			() => basicFunction.call(this, ...args) as ReturnType<F>,
+		);
 		const nativeStopFunction = output.stop.bind(output);
 		nativeStopFunctions.set(output, nativeStopFunction);
 
@@ -62,7 +82,7 @@ export function wrapFunction<F extends (...args: any[]) => { stop: () => void }>
 		};
 
 		return output;
-	};
+	}
 
 	return wrappedFunction as unknown as F;
 }
