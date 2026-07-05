@@ -4,7 +4,7 @@ import {
 	Hex,
 	HEX_POSITIONS,
 	KNOWN_MAP_NAMES,
-} from '@packages/data/dist/hexMap';
+} from '@packages/data/dist/hex-map';
 import { MapIconInternal } from '@packages/data/dist/map-icons';
 import {
 	MapFlags,

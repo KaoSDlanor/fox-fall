@@ -106,7 +106,7 @@
 	import { HEX_SIZE } from '@packages/data/dist/artillery/map';
 	import { shallowRef, watch } from "vue";
 	import { HEX_MAPS, MapSource } from "@/assets/images/hex-maps";
-	import { Hex, HEX_POSITIONS } from "@packages/data/dist/hexMap";
+	import { Hex, HEX_POSITIONS } from "@packages/data/dist/hex-map";
 	import { injectViewport } from '@/viewport/viewport';
 
 	const viewport = injectViewport();

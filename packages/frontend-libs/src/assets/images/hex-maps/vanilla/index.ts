@@ -1,4 +1,4 @@
-import { Hex } from '@packages/data/dist/hexMap';
+import { Hex } from '@packages/data/dist/hex-map';
 import BasinSionnachMap from './MapBasinSionnachHex.png?no-inline';
 import SpeakingWoodsMap from './MapSpeakingWoodsHex.png?no-inline';
 import HowlCountyMap from './MapHowlCountyHex.png?no-inline';
